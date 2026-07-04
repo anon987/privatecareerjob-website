@@ -1,0 +1,45 @@
+@import "tailwindcss";
+
+/* Design tokens — mirror the app's DESIGN.md: violet = brand/structure, amber = action */
+@theme {
+  --color-brand: #5b4bff;
+  --color-brand-pressed: #4b3af5;
+  --color-brand-tonal: #eceaff;
+  --color-accent: #f59e0b;
+  --color-accent-pressed: #d97706;
+  --color-ink: #111827;
+  --color-ink-2: #6b7280;
+  --color-ink-3: #9ca3af;
+  --color-paper: #fafafc;
+  --color-line: #e8e8f0;
+  --color-sunken: #f3f3f8;
+  --font-sans: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
+}
+
+/* profile-page font styles (picked in the app, rendered here) */
+.f-modern { font-family: var(--font-manrope), sans-serif; }
+.f-serif { font-family: var(--font-playfair), Georgia, serif; }
+.f-serif .pp-body { font-family: Georgia, "Times New Roman", serif; }
+.f-grotesk { font-family: var(--font-grotesk), sans-serif; }
+.f-rounded { font-family: var(--font-nunito), sans-serif; }
+.f-mono { font-family: var(--font-jbmono), monospace; letter-spacing: -0.2px; }
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: none; }
+}
+.rise { animation: rise 0.5s ease both; }
+.rise-1 { animation: rise 0.5s 0.06s ease both; }
+.rise-2 { animation: rise 0.5s 0.12s ease both; }
+.rise-3 { animation: rise 0.5s 0.18s ease both; }
+
+/* micro-interactions (dashboard): gentle card lift + button press */
+.card-lift { transition: transform 0.15s ease, box-shadow 0.15s ease; }
+.card-lift:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(17, 24, 39, 0.08); }
+.press { transition: transform 0.1s ease; }
+.press:active { transform: scale(0.97); }
+
+@media (prefers-reduced-motion: reduce) {
+  .rise, .rise-1, .rise-2, .rise-3 { animation: none; }
+  .card-lift, .card-lift:hover, .press, .press:active { transition: none; transform: none; }
+}
