@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { useDash } from "./Shell";
 import {
   suggestHandle,
@@ -208,7 +209,8 @@ export default function WebsiteManager() {
             </span>
           </div>
           <p className="mt-4 text-[13px] text-ink-2 bg-sunken rounded-xl px-4 py-3">
-            ✏️ Skills, experience, education and projects are edited in the <b>privatesectorjob app</b> — changes appear here when you republish.
+            ✏️ Edit your name, skills, experience, education and projects on the{" "}
+            <Link href="/dashboard/profile" className="font-bold text-brand">Profile</Link> tab — changes appear here when you republish.
           </p>
         </section>
 

@@ -63,7 +63,7 @@ export default function Home() {
   const nextAction = !profile.publicHandle
     ? { text: "Publish your portfolio page — recruiters trust candidates with a live profile.", href: "/dashboard/website", cta: "Set up My page" }
     : pct < 70
-    ? { text: `Your profile is ${pct}% complete — filling the gaps makes you visible to more recruiters.`, href: "/dashboard/website", cta: "See what's missing" }
+    ? { text: `Your profile is ${pct}% complete — filling the gaps makes you visible to more recruiters.`, href: "/dashboard/profile", cta: "Complete your profile" }
     : apps.length === 0
     ? { text: "You haven't applied anywhere yet — your first application takes under a minute.", href: "/dashboard/jobs", cta: "Browse jobs" }
     : { text: "Momentum matters — a few fresh applications a week keeps responses coming.", href: "/dashboard/jobs", cta: "See new jobs" };
@@ -179,7 +179,7 @@ export default function Home() {
                     <span key={m} className="px-2.5 py-1 rounded-full border border-line text-[11.5px] font-semibold text-ink-2">○ {m}</span>
                   ))}
                 </div>
-                <p className="text-[11.5px] text-ink-3 mt-3">Add these from the privatesectorjob app → Profile tab.</p>
+                <Link href="/dashboard/profile" className="inline-block text-[12px] font-bold text-brand mt-3">Complete your profile →</Link>
               </>
             ) : (
               <p className="text-[12.5px] text-green-700 font-semibold mt-3">✓ Complete — you're putting your best foot forward.</p>

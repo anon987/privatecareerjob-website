@@ -17,6 +17,8 @@ import { ensureAccount, googleSignIn, webSignOut, type AppProfile } from "@/lib/
 interface DashValue {
   user: User;
   profile: AppProfile;
+  /** Re-read users/{uid} after an edit so every tab sees fresh data. */
+  refresh: () => Promise<void>;
 }
 
 const DashCtx = createContext<DashValue | null>(null);
@@ -34,6 +36,7 @@ const TABS = [
   { href: "/dashboard/saved", label: "Saved" },
   { href: "/dashboard/messages", label: "Messages" },
   { href: "/dashboard/ai", label: "AI Tools" },
+  { href: "/dashboard/profile", label: "Profile" },
   { href: "/dashboard/website", label: "My page" },
 ];
 
@@ -138,7 +141,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <DashCtx.Provider value={{ user, profile }}>
+    <DashCtx.Provider value={{ user, profile, refresh: async () => setProfile(await ensureAccount(user)) }}>
       <div className="min-h-screen bg-paper flex flex-col">
         <header className="sticky top-0 z-40 border-b border-line bg-white/90 backdrop-blur">
           <div className="max-w-[1020px] mx-auto px-5">
