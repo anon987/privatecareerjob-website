@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { onAuthStateChanged, type User } from "firebase/auth";
+import { Menu, X } from "lucide-react";
 import { auth } from "@/lib/firebaseClient";
 import { ensureAccount, googleSignIn, webSignOut, type AppProfile } from "@/lib/account";
 
@@ -50,8 +51,14 @@ function GoogleIcon() {
 export function Shell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [user, setUser] = useState<User | null | undefined>(undefined);
-  const [profile, setProfile] = useState<AppProfile | null>(null);
+  const [profile, setProfile] = useState<AppProfile | null | undefined>(undefined);
   const [error, setError] = useState("");
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  // Close the mobile menu whenever the route changes.
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [pathname]);
 
   useEffect(
     () =>
@@ -62,6 +69,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
           setProfile(null);
           return;
         }
+        setProfile(undefined); // loading — don't fall through to the sign-in card
         try {
           setProfile(await ensureAccount(u));
         } catch (e) {
@@ -81,7 +89,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
     }
   };
 
-  if (user === undefined) {
+  if (user === undefined || (user && profile === undefined && !error)) {
     return <div className="min-h-screen grid place-items-center text-ink-2">Loading…</div>;
   }
 
@@ -139,12 +147,22 @@ export function Shell({ children }: { children: React.ReactNode }) {
                 <span className="grid place-items-center w-8 h-8 rounded-[9px] bg-brand text-white text-[17px]">P</span>
                 <span className="hidden sm:inline">privatesectorjob</span>
               </Link>
-              <div className="flex items-center gap-3 text-[13.5px]">
-                <span className="text-ink-2 hidden md:inline">{profile.fullName || user.email}</span>
+              <div className="hidden md:flex items-center gap-3 text-[13.5px]">
+                <span className="text-ink-2">{profile.fullName || user.email}</span>
                 <button onClick={() => webSignOut()} className="font-bold text-brand cursor-pointer">Sign out</button>
               </div>
+              <button
+                type="button"
+                onClick={() => setMenuOpen((open) => !open)}
+                aria-label={menuOpen ? "Close menu" : "Open menu"}
+                aria-expanded={menuOpen}
+                className="md:hidden grid h-10 w-10 -mr-1 place-items-center rounded-xl border border-line text-ink transition hover:bg-sunken"
+              >
+                {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+              </button>
             </div>
-            <nav className="flex gap-1 -mb-px overflow-x-auto" aria-label="Dashboard">
+            {/* Desktop tabs */}
+            <nav className="hidden md:flex gap-1 -mb-px" aria-label="Dashboard">
               {TABS.map((t) => {
                 const active = t.href === "/dashboard" ? pathname === "/dashboard" : pathname.startsWith(t.href);
                 return (
@@ -160,6 +178,32 @@ export function Shell({ children }: { children: React.ReactNode }) {
                 );
               })}
             </nav>
+            {/* Mobile menu */}
+            {menuOpen ? (
+              <div className="md:hidden pb-3 pt-1">
+                <nav className="flex flex-col gap-1" aria-label="Dashboard">
+                  {TABS.map((t) => {
+                    const active = t.href === "/dashboard" ? pathname === "/dashboard" : pathname.startsWith(t.href);
+                    return (
+                      <Link
+                        key={t.href}
+                        href={t.href}
+                        onClick={() => setMenuOpen(false)}
+                        className={`rounded-xl px-4 py-3 text-[15px] font-bold transition ${
+                          active ? "bg-brand-tonal text-brand" : "text-ink-2 hover:bg-sunken hover:text-ink"
+                        }`}
+                      >
+                        {t.label}
+                      </Link>
+                    );
+                  })}
+                </nav>
+                <div className="mt-2 flex items-center justify-between gap-3 border-t border-line px-1 pt-3 text-[13.5px]">
+                  <span className="text-ink-2 truncate">{profile.fullName || user.email}</span>
+                  <button onClick={() => webSignOut()} className="font-bold text-brand cursor-pointer shrink-0">Sign out</button>
+                </div>
+              </div>
+            ) : null}
           </div>
         </header>
         <main className="flex-1 w-full max-w-[1020px] mx-auto px-5 py-6">{children}</main>

@@ -55,6 +55,7 @@ export default function SignupCard() {
 
     const userRef = doc(db, "users", user.uid);
     const snap = await getDoc(userRef);
+    const alreadyHadAccount = snap.exists();
     if (!snap.exists()) {
       const base = {
         role,
@@ -77,6 +78,14 @@ export default function SignupCard() {
       await setDoc(userRef, base);
     }
     if (!existing.exists()) await setDoc(roleRef, { role, uid: user.uid });
+
+    // Returning users are really signing in, not signing up — take them
+    // straight to their dashboard instead of the "account ready" screen.
+    if (alreadyHadAccount) {
+      const dest = (snap.data()?.role ?? role) === "recruiter" ? "/recruiter" : "/dashboard";
+      router.replace(dest);
+      return;
+    }
 
     setDone(
       `Your ${role} account is ready! Open the privatesectorjob app on your phone and sign in with this ${viaGoogle ? "Google account" : "email"} to continue.`

@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { onAuthStateChanged, type User } from "firebase/auth";
+import { Menu, X } from "lucide-react";
 import { auth } from "@/lib/firebaseClient";
 import { fetchProfile, googleSignIn, webSignOut, type AppProfile } from "@/lib/account";
 
@@ -52,6 +53,12 @@ export function RecShell({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null | undefined>(undefined);
   const [profile, setProfile] = useState<AppProfile | null | undefined>(undefined);
   const [error, setError] = useState("");
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  // Close the mobile menu whenever the route changes.
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [pathname]);
 
   const load = async (u: User) => setProfile(await fetchProfile(u.uid));
 
@@ -148,12 +155,22 @@ export function RecShell({ children }: { children: React.ReactNode }) {
                 <span className="hidden sm:inline">privatesectorjob</span>
                 <span className="px-2 py-0.5 rounded-full bg-brand-tonal text-brand text-[10.5px] font-bold uppercase tracking-wider">Recruiter</span>
               </Link>
-              <div className="flex items-center gap-3 text-[13.5px]">
-                <span className="text-ink-2 hidden md:inline">{profile.companyName || user.email}</span>
+              <div className="hidden md:flex items-center gap-3 text-[13.5px]">
+                <span className="text-ink-2">{profile.companyName || user.email}</span>
                 <button onClick={() => webSignOut()} className="font-bold text-brand cursor-pointer">Sign out</button>
               </div>
+              <button
+                type="button"
+                onClick={() => setMenuOpen((open) => !open)}
+                aria-label={menuOpen ? "Close menu" : "Open menu"}
+                aria-expanded={menuOpen}
+                className="md:hidden grid h-10 w-10 -mr-1 place-items-center rounded-xl border border-line text-ink transition hover:bg-sunken"
+              >
+                {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+              </button>
             </div>
-            <nav className="flex gap-1 -mb-px overflow-x-auto" aria-label="Recruiter portal">
+            {/* Desktop tabs */}
+            <nav className="hidden md:flex gap-1 -mb-px" aria-label="Recruiter portal">
               {TABS.map((t) => {
                 const active = t.href === "/recruiter" ? pathname === "/recruiter" : pathname.startsWith(t.href);
                 return (
@@ -169,6 +186,32 @@ export function RecShell({ children }: { children: React.ReactNode }) {
                 );
               })}
             </nav>
+            {/* Mobile menu */}
+            {menuOpen ? (
+              <div className="md:hidden pb-3 pt-1">
+                <nav className="flex flex-col gap-1" aria-label="Recruiter portal">
+                  {TABS.map((t) => {
+                    const active = t.href === "/recruiter" ? pathname === "/recruiter" : pathname.startsWith(t.href);
+                    return (
+                      <Link
+                        key={t.href}
+                        href={t.href}
+                        onClick={() => setMenuOpen(false)}
+                        className={`rounded-xl px-4 py-3 text-[15px] font-bold transition ${
+                          active ? "bg-brand-tonal text-brand" : "text-ink-2 hover:bg-sunken hover:text-ink"
+                        }`}
+                      >
+                        {t.label}
+                      </Link>
+                    );
+                  })}
+                </nav>
+                <div className="mt-2 flex items-center justify-between gap-3 border-t border-line px-1 pt-3 text-[13.5px]">
+                  <span className="text-ink-2 truncate">{profile.companyName || user.email}</span>
+                  <button onClick={() => webSignOut()} className="font-bold text-brand cursor-pointer shrink-0">Sign out</button>
+                </div>
+              </div>
+            ) : null}
           </div>
         </header>
         <main className="flex-1 w-full max-w-[1020px] mx-auto px-5 py-6">{children}</main>
