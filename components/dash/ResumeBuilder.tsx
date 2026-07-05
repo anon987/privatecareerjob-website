@@ -615,19 +615,46 @@ interface EditorProps {
 type ToolId = "templates" | "color" | "font" | "photo" | "edit";
 
 function ResumeEditor(props: EditorProps) {
-  const { spec, siblings, display, bare, counts, accent, onAccent, showPhoto, onPhoto, photoAvailable, fontId, onFont, fam, details, onDetail, onBack, onPickSibling, onDownload, onSave, busy, note, printRef } = props;
-  const [tool, setTool] = useState<ToolId | null>(null);
+  const { spec, display, bare, counts, accent, onAccent, showPhoto, onPhoto, photoAvailable, fontId, onFont, fam, details, onDetail, onBack, onPickSibling, onDownload, onSave, busy, note, printRef } = props;
+  const [tool, setTool] = useState<ToolId | null>(null); // null = no mobile sheet open
+  const [family, setFamily] = useState<Kind>(spec.kind); // which family the Templates panel browses
+
+  // 13 layout styles of the browsed family, each rendered in the CURRENT accent so
+  // the panel previews the exact look; picking one keeps the color, changing only style.
+  const currentStyle = spec.key.split("-")[1];
+  const familyStyles: TemplateSpec[] =
+    family === "text"
+      ? TEXT_STYLES.map((s): TemplateSpec => ({ key: `t-${s.id}`, name: s.name, kind: "text", layout: "single", accent, header: s.header, serif: s.serif, rules: s.rules, compact: s.compact }))
+      : VISUAL_STYLES.map((s): TemplateSpec => ({ key: `v-${s.id}`, name: s.name, kind: "visual", layout: s.layout, accent, side: s.side, tone: s.tone, skillBars: s.skillBars, timeline: s.timeline, serif: s.serif, rules: true }));
+  const pickStyle = (styleId: string, kind: Kind) => {
+    const colorId = COLORS.find((c) => c.hex === accent)?.id ?? "ink";
+    const t = TEMPLATES.find((x) => x.key === `${kind === "text" ? "t" : "v"}-${styleId}-${colorId}`);
+    if (t) onPickSibling(t);
+  };
 
   const templatesPanel = (
-    <div className="flex gap-2.5 overflow-x-auto pb-1 -mx-1 px-1">
-      {siblings.map((t) => (
-        <button key={t.key} onClick={() => onPickSibling(t)} className="shrink-0 w-[88px] text-left cursor-pointer">
-          <div className={`rounded-[10px] p-0.5 border-2 ${t.key === spec.key ? "border-brand" : "border-transparent"}`}>
-            <TemplateThumb spec={t} />
-          </div>
-          <p className={`text-[11px] font-semibold mt-1 truncate text-center ${t.key === spec.key ? "text-brand" : "text-ink-3"}`}>{t.name.split(" ")[0]}</p>
-        </button>
-      ))}
+    <div>
+      <div className="grid grid-cols-2 gap-1.5 mb-3">
+        {(["visual", "text"] as const).map((k) => (
+          <button key={k} onClick={() => setFamily(k)} className={`min-h-9 rounded-[10px] text-[12.5px] font-bold transition ${family === k ? "bg-brand text-white" : "bg-sunken text-ink-2 hover:text-ink"}`}>
+            {k === "visual" ? "Visual" : "Text (ATS)"}
+          </button>
+        ))}
+      </div>
+      <div className="grid grid-cols-2 gap-2.5">
+        {familyStyles.map((t) => {
+          const sid = t.key.split("-")[1];
+          const selected = sid === currentStyle && t.kind === spec.kind;
+          return (
+            <button key={t.key} onClick={() => pickStyle(sid, t.kind)} className="text-left cursor-pointer group">
+              <div className={`rounded-[10px] p-0.5 border-2 ${selected ? "border-brand" : "border-transparent group-hover:border-line"}`}>
+                <TemplateThumb spec={t} />
+              </div>
+              <p className={`text-[11px] font-semibold mt-1 truncate ${selected ? "text-brand" : "text-ink-3"}`}>{t.name}</p>
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 
@@ -671,13 +698,33 @@ function ResumeEditor(props: EditorProps) {
   );
 
   const tools: { id: ToolId; label: string; title: string; Icon: typeof LayoutGrid; panel: React.ReactNode }[] = [
-    { id: "templates", label: "Templates", title: spec.kind === "text" ? "Text templates" : "Visual themes", Icon: LayoutGrid, panel: templatesPanel },
+    { id: "templates", label: "Templates", title: "Templates", Icon: LayoutGrid, panel: templatesPanel },
     { id: "color", label: "Color", title: "Accent color", Icon: Palette, panel: colorPanel },
     { id: "font", label: "Font", title: "Font", Icon: Type, panel: fontPanel },
     ...(spec.kind === "visual" ? [{ id: "photo" as ToolId, label: "Photo", title: "Photo", Icon: ImageIcon, panel: photoPanel }] : []),
     { id: "edit", label: "Details", title: "Your details", Icon: Pencil, panel: detailsPanel },
   ];
-  const activeTool = tools.find((t) => t.id === tool);
+  const activeTool = tools.find((t) => t.id === tool); // mobile sheet
+  const deskTool = tools.find((t) => t.id === (tool ?? "templates")) ?? tools[0]; // desktop panel (always one active)
+
+  const Rail = ({ mobile }: { mobile?: boolean }) => (
+    <>
+      {tools.map((t) => {
+        const on = mobile ? tool === t.id : deskTool.id === t.id;
+        return (
+          <button
+            key={t.id}
+            onClick={() => setTool(mobile ? (tool === t.id ? null : t.id) : t.id)}
+            aria-pressed={on}
+            className={`flex flex-col items-center justify-center gap-1 cursor-pointer transition ${mobile ? "flex-1 min-h-[58px]" : `rounded-2xl py-2.5 ${on ? "bg-brand-tonal text-brand" : "text-ink-2 hover:bg-sunken"}`}`}
+          >
+            <t.Icon className={`h-[20px] w-[20px] ${mobile ? (on ? "text-brand" : "text-ink-2") : ""}`} />
+            <span className={`text-[10.5px] font-bold ${mobile ? (on ? "text-brand" : "text-ink-2") : ""}`}>{t.label}</span>
+          </button>
+        );
+      })}
+    </>
+  );
 
   return (
     <div className="relative pb-24 lg:pb-0">
@@ -692,9 +739,9 @@ function ResumeEditor(props: EditorProps) {
         <button onClick={onSave} disabled={busy} className={`${btn} bg-accent hover:bg-accent-pressed text-ink disabled:opacity-50`}>{busy ? "Saving…" : "Save"}</button>
       </div>
 
-      <div className="mt-4 lg:grid lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-6 lg:items-start">
-        {/* canvas */}
-        <div className="rounded-2xl border border-line bg-sunken p-4 sm:p-6 lg:sticky lg:top-20">
+      {/* desktop: canvas | active panel | vertical tool rail (rail on the right) */}
+      <div className="mt-4 lg:grid lg:grid-cols-[minmax(0,1fr)_300px_84px] lg:gap-4 lg:items-start">
+        <div className="rounded-2xl border border-line bg-sunken p-4 sm:p-6">
           <ScaledPreview>
             <FontCtx.Provider value={fam}>
               <ResumePreview data={display} spec={spec} accent={accent} showPhoto={showPhoto} />
@@ -705,31 +752,24 @@ function ResumeEditor(props: EditorProps) {
           </p>
         </div>
 
-        {/* desktop tools panel (right) */}
-        <aside className="hidden lg:block space-y-4">
-          {tools.map((t) => (
-            <section key={t.id} className={cardCls}>
-              <h2 className="text-[14px] font-extrabold mb-3">{t.title}</h2>
-              {t.panel}
-            </section>
-          ))}
-          {note && <p className="text-[13.5px] font-semibold text-green-600">{note}</p>}
+        {/* desktop panel — shows the active tool's content vertically */}
+        <aside className="hidden lg:flex lg:flex-col lg:sticky lg:top-20 max-h-[calc(100vh-6rem)] overflow-hidden rounded-3xl border border-line bg-white shadow-[0_2px_14px_rgba(17,24,39,0.04)]">
+          <div className="px-4 py-3 border-b border-line flex items-center justify-between">
+            <h2 className="text-[14px] font-extrabold">{deskTool.title}</h2>
+            {note && <span className="text-[12px] font-semibold text-green-600">{note}</span>}
+          </div>
+          <div className="p-4 overflow-y-auto">{deskTool.panel}</div>
         </aside>
+
+        {/* desktop vertical tool rail */}
+        <nav aria-label="Resume tools" className="hidden lg:flex lg:flex-col lg:sticky lg:top-20 gap-1 rounded-3xl border border-line bg-white p-2 shadow-[0_2px_14px_rgba(17,24,39,0.04)]">
+          <Rail />
+        </nav>
       </div>
 
       {/* mobile bottom tool bar */}
       <div className="lg:hidden fixed bottom-0 inset-x-0 z-40 border-t border-line bg-white/95 backdrop-blur">
-        <div className="mx-auto max-w-[1020px] flex">
-          {tools.map((t) => {
-            const on = tool === t.id;
-            return (
-              <button key={t.id} onClick={() => setTool(on ? null : t.id)} aria-pressed={on} className="flex-1 min-h-[58px] flex flex-col items-center justify-center gap-1 cursor-pointer">
-                <t.Icon className={`h-[20px] w-[20px] ${on ? "text-brand" : "text-ink-2"}`} />
-                <span className={`text-[11px] font-bold ${on ? "text-brand" : "text-ink-2"}`}>{t.label}</span>
-              </button>
-            );
-          })}
-        </div>
+        <div className="mx-auto max-w-[1020px] flex"><Rail mobile /></div>
       </div>
 
       {/* mobile bottom sheet */}
