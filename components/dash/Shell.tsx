@@ -37,6 +37,7 @@ const TABS = [
   { href: "/dashboard/messages", label: "Messages" },
   { href: "/dashboard/ai", label: "AI Tools" },
   { href: "/dashboard/profile", label: "Profile" },
+  { href: "/dashboard/resume", label: "Resume" },
   { href: "/dashboard/website", label: "My page" },
 ];
 
@@ -165,7 +166,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
               </button>
             </div>
             {/* Desktop tabs */}
-            <nav className="hidden md:flex gap-1 -mb-px" aria-label="Dashboard">
+            <nav className="hidden md:flex gap-1 -mb-px overflow-x-auto" aria-label="Dashboard">
               {TABS.map((t) => {
                 const active = t.href === "/dashboard" ? pathname === "/dashboard" : pathname.startsWith(t.href);
                 return (

@@ -309,7 +309,7 @@ export default function Profile() {
       />
 
       <p className="text-[12.5px] text-ink-3">
-        Your profile feeds your public page. After editing, publish or republish it from{" "}
+        Your profile feeds your <Link href="/dashboard/resume" className="font-bold text-brand">Resume builder</Link> and your public page. After editing, publish or republish from{" "}
         <Link href="/dashboard/website" className="font-bold text-brand">My page</Link>.
       </p>
 

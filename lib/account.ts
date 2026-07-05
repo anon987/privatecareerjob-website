@@ -35,6 +35,11 @@ export interface AppProfile {
   certificates?: { id?: string; name: string; issuer?: string; year?: string }[];
   projects?: { id?: string; title: string; description?: string }[];
   resumes?: { id?: string; filename: string; url?: string; isDefault?: boolean }[];
+  /** resume-builder preferences (mirrors the app) */
+  resumeTemplate?: string;
+  resumeAccent?: string;
+  resumePhotoOn?: boolean;
+  resumeFont?: string;
 }
 
 export async function googleSignIn(): Promise<User> {
