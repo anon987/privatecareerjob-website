@@ -22,6 +22,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
+      data-scroll-behavior="smooth"
       className={`${manrope.variable} ${playfair.variable} ${grotesk.variable} ${nunito.variable} ${jbmono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col font-sans bg-paper text-ink">{children}</body>

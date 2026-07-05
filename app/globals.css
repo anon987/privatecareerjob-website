@@ -43,3 +43,64 @@
   .rise, .rise-1, .rise-2, .rise-3 { animation: none; }
   .card-lift, .card-lift:hover, .press, .press:active { transition: none; transform: none; }
 }
+
+@keyframes aurora-shift {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); filter: hue-rotate(0deg); }
+  50% { transform: translate3d(0, 18px, 0) scale(1.04); filter: hue-rotate(10deg); }
+}
+
+@keyframes gradient-pan {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes blob-float {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(18px, -20px, 0) scale(1.08); }
+}
+
+@keyframes testimonial-scroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(calc(-380px * 4 - 1.25rem * 4)); }
+}
+
+.aurora-bg {
+  background:
+    radial-gradient(700px 340px at 18% 18%, rgba(91, 75, 255, 0.2), transparent 70%),
+    radial-gradient(580px 300px at 78% 8%, rgba(245, 158, 11, 0.16), transparent 68%),
+    linear-gradient(180deg, rgba(250, 250, 252, 0), rgba(250, 250, 252, 1));
+  animation: aurora-shift 11s ease-in-out infinite;
+}
+
+.animated-gradient-text {
+  background-size: 220% 220%;
+  animation: gradient-pan 9s ease-in-out infinite;
+}
+
+.float-blob { animation: blob-float 9s ease-in-out infinite; }
+.float-blob-delayed { animation: blob-float 11s 1.5s ease-in-out infinite; }
+
+.testimonial-track {
+  width: max-content;
+  animation: testimonial-scroll 34s linear infinite;
+}
+
+.testimonial-track:hover { animation-play-state: paused; }
+
+html { scroll-behavior: smooth; }
+
+@media (max-width: 640px) {
+  .testimonial-track { animation-duration: 24s; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .aurora-bg,
+  .animated-gradient-text,
+  .float-blob,
+  .float-blob-delayed,
+  .testimonial-track {
+    animation: none;
+  }
+}
