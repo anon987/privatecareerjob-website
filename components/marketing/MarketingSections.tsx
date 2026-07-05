@@ -172,16 +172,16 @@ function HeroVisual({ visual }: { visual?: HeroProps["visual"] }) {
 
 export function PageHero({ eyebrow, title, gradient, body, primary, secondary, visual = "phone" }: HeroProps) {
   return (
-    <header className="relative overflow-hidden pb-18 pt-14 sm:pt-20 lg:pb-24">
+    <header className="relative overflow-hidden pb-14 pt-10 sm:pb-18 sm:pt-20 lg:pb-24">
       <div className="aurora-bg absolute inset-x-0 top-[-180px] h-[620px] opacity-80" />
       <div className="float-blob absolute left-[5%] top-20 h-40 w-40 rounded-full bg-brand/18 blur-3xl" />
       <div className="float-blob-delayed absolute right-[8%] top-52 h-44 w-44 rounded-full bg-accent/20 blur-3xl" />
-      <div className="relative mx-auto grid max-w-[1180px] items-center gap-12 px-5 sm:px-6 lg:grid-cols-[1.04fr_0.96fr]">
-        <motion.div initial="hidden" animate="visible" variants={stagger}>
-          <motion.span variants={fadeUp} className="inline-flex items-center gap-2 rounded-full border border-brand/15 bg-white/70 px-4 py-2 text-xs font-extrabold uppercase tracking-[0.14em] text-brand shadow-[0_12px_35px_rgba(91,75,255,0.08)] backdrop-blur-xl"><Sparkles className="h-4 w-4" /> {eyebrow}</motion.span>
-          <motion.h1 variants={fadeUp} className="mt-6 text-balance text-[clamp(2.5rem,5vw,4.25rem)] font-black leading-[0.98] tracking-[-0.06em] text-ink">{title}<span className="animated-gradient-text mt-1 block bg-gradient-to-r from-brand via-[#8f7cff] to-accent bg-clip-text text-transparent">{gradient}</span></motion.h1>
-          <motion.p variants={fadeUp} className="mt-6 max-w-2xl text-lg leading-8 text-ink-2 sm:text-xl">{body}</motion.p>
-          <motion.div variants={fadeUp} className="mt-8 flex flex-col gap-3 sm:flex-row"><ButtonLink href={primary.href}>{primary.label}</ButtonLink>{secondary ? <ButtonLink href={secondary.href} variant="secondary">{secondary.label}</ButtonLink> : null}</motion.div>
+      <div className="relative mx-auto grid max-w-[1180px] items-center gap-9 px-5 sm:gap-10 sm:px-6 lg:grid-cols-[1.04fr_0.96fr] lg:gap-12">
+        <motion.div className="text-center lg:text-left" initial="hidden" animate="visible" variants={stagger}>
+          <motion.span variants={fadeUp} className="inline-flex items-center gap-2 rounded-full border border-brand/15 bg-white/70 px-3.5 py-2 text-[11px] font-extrabold uppercase leading-tight tracking-[0.12em] text-brand shadow-[0_12px_35px_rgba(91,75,255,0.08)] backdrop-blur-xl sm:px-4 sm:text-xs sm:tracking-[0.14em]"><Sparkles className="h-4 w-4 shrink-0" /> {eyebrow}</motion.span>
+          <motion.h1 variants={fadeUp} className="mt-5 text-balance break-words text-[clamp(2.25rem,8vw,4.25rem)] font-black leading-[1.02] tracking-[-0.05em] text-ink sm:mt-6 sm:leading-[0.98] sm:tracking-[-0.06em]">{title}<span className="animated-gradient-text mt-1 block bg-gradient-to-r from-brand via-[#8f7cff] to-accent bg-clip-text text-transparent">{gradient}</span></motion.h1>
+          <motion.p variants={fadeUp} className="mx-auto mt-5 max-w-xl text-pretty text-base leading-7 text-ink-2 sm:mt-6 sm:max-w-2xl sm:text-lg sm:leading-8 lg:mx-0 lg:text-xl">{body}</motion.p>
+          <motion.div variants={fadeUp} className="mt-7 flex flex-col gap-3 sm:mt-8 sm:flex-row sm:justify-center lg:justify-start"><ButtonLink href={primary.href}>{primary.label}</ButtonLink>{secondary ? <ButtonLink href={secondary.href} variant="secondary">{secondary.label}</ButtonLink> : null}</motion.div>
         </motion.div>
         <HeroVisual visual={visual} />
       </div>
@@ -237,7 +237,7 @@ function PipelineCard() {
 
 export function RecruiterPipeline() {
   const steps = [[BriefcaseBusiness, "Job Posted"], [UsersRound, "Candidates"], [SearchCheck, "Shortlisted"], [MessageSquareText, "Interview"], [FileCheck2, "Offer"], [BadgeCheck, "Hired"]] as const;
-  return <section className="bg-white py-24 sm:py-28"><div className="mx-auto max-w-[1180px] px-5 sm:px-6"><SectionHeading title="A hiring pipeline that moves" subtitle="Post a job in minutes and move candidates through a clear, modern flow without clunky portals or spreadsheets." /><motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-90px" }} className="mt-12 grid gap-4 md:grid-cols-6">{steps.map(([Icon, label], index) => <motion.div key={label} variants={fadeUp} className="relative rounded-[1.35rem] border border-line bg-white p-4 shadow-[0_18px_50px_rgba(17,24,39,0.06)]">{index < steps.length - 1 ? <div className="absolute left-1/2 top-full h-4 w-px bg-gradient-to-b from-brand/40 to-transparent md:left-full md:top-1/2 md:h-px md:w-4" /> : null}<span className="grid h-11 w-11 place-items-center rounded-2xl bg-brand-tonal text-brand"><Icon className="h-5 w-5" /></span><p className="mt-4 text-sm font-extrabold tracking-[-0.02em]">{label}</p></motion.div>)}</motion.div></div></section>;
+  return <section className="bg-white py-16 sm:py-24 lg:py-28"><div className="mx-auto max-w-[1180px] px-5 sm:px-6"><SectionHeading title="A hiring pipeline that moves" subtitle="Post a job in minutes and move candidates through a clear, modern flow without clunky portals or spreadsheets." /><motion.div variants={stagger} initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-90px" }} className="mx-auto mt-10 grid max-w-md gap-3 sm:gap-4 md:mt-12 md:max-w-none md:grid-cols-6">{steps.map(([Icon, label], index) => <motion.div key={label} variants={fadeUp} className="relative flex items-center gap-4 rounded-[1.35rem] border border-line bg-white p-4 shadow-[0_18px_50px_rgba(17,24,39,0.06)] md:block">{index < steps.length - 1 ? <div className="absolute left-1/2 top-full hidden h-3 w-px -translate-x-1/2 bg-gradient-to-b from-brand/40 to-transparent sm:block md:left-full md:top-1/2 md:h-px md:w-4 md:-translate-x-0 md:-translate-y-1/2" /> : null}<span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-brand-tonal text-brand"><Icon className="h-5 w-5" /></span><p className="text-sm font-extrabold tracking-[-0.02em] md:mt-4">{label}</p></motion.div>)}</motion.div></div></section>;
 }
 
 export function Comparison() {
@@ -255,7 +255,7 @@ export function FAQSection() {
 }
 
 function ContactCard() {
-  return <div className="relative mx-auto w-full max-w-[430px] rounded-[2rem] border border-white/70 bg-white/75 p-6 shadow-[0_30px_90px_rgba(91,75,255,0.14)] backdrop-blur-xl"><div className="grid gap-4"><div className="rounded-2xl bg-brand-tonal p-5"><p className="text-sm font-extrabold text-brand">Support</p><p className="mt-2 text-2xl font-black tracking-[-0.05em]">support@privatesectorjob.com</p></div><div className="rounded-2xl border border-line bg-white p-5"><p className="text-sm font-extrabold text-ink-3">Response window</p><p className="mt-2 text-lg font-extrabold">Business days</p></div></div></div>;
+  return <div className="relative mx-auto w-full max-w-[430px] rounded-[2rem] border border-white/70 bg-white/75 p-6 shadow-[0_30px_90px_rgba(91,75,255,0.14)] backdrop-blur-xl"><div className="grid gap-4"><div className="rounded-2xl bg-brand-tonal p-5"><p className="text-sm font-extrabold text-brand">Support</p><p className="mt-2 break-words text-xl font-black tracking-[-0.04em] sm:text-2xl sm:tracking-[-0.05em]">support@privatesectorjob.com</p></div><div className="rounded-2xl border border-line bg-white p-5"><p className="text-sm font-extrabold text-ink-3">Response window</p><p className="mt-2 text-lg font-extrabold">Business days</p></div></div></div>;
 }
 
 export function CTASection() {

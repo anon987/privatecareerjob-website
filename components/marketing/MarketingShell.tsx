@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useEffect, useState } from "react";
 import Lenis from "lenis";
-import { ArrowRight, Mail, MessageCircle, UsersRound } from "lucide-react";
+import { ArrowRight, Mail, Menu, MessageCircle, UsersRound, X } from "lucide-react";
 
 const navItems = [
   { href: "/job-seekers", label: "Job Seekers" },
@@ -31,6 +31,12 @@ export function MarketingShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const reduceMotion = useReducedMotion();
   const [spotlight, setSpotlight] = useState({ x: 50, y: 10 });
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  // Close the mobile menu whenever the route changes.
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [pathname]);
 
   useEffect(() => {
     if (reduceMotion) return;
@@ -56,9 +62,11 @@ export function MarketingShell({ children }: { children: React.ReactNode }) {
       <div className="pointer-events-none fixed inset-0 z-0 bg-[linear-gradient(rgba(91,75,255,0.045)_1px,transparent_1px),linear-gradient(90deg,rgba(91,75,255,0.045)_1px,transparent_1px)] bg-[size:44px_44px] [mask-image:linear-gradient(to_bottom,black,transparent_82%)]" />
 
       <nav className="sticky top-0 z-50 border-b border-white/70 bg-paper/72 backdrop-blur-xl">
-        <div className="mx-auto flex min-h-16 max-w-[1180px] flex-wrap items-center justify-between gap-3 px-5 py-3 sm:px-6 lg:flex-nowrap">
+        <div className="mx-auto flex min-h-16 max-w-[1180px] items-center justify-between gap-3 px-5 py-3 sm:px-6">
           <Logo />
-          <div className="order-3 flex w-full gap-1 overflow-x-auto lg:order-2 lg:w-auto lg:overflow-visible">
+
+          {/* Desktop links */}
+          <div className="hidden items-center gap-1 lg:flex">
             {navItems.map((item) => {
               const active = pathname === item.href;
               return (
@@ -72,13 +80,63 @@ export function MarketingShell({ children }: { children: React.ReactNode }) {
               );
             })}
           </div>
-          <div className="order-2 flex items-center gap-3 lg:order-3">
+
+          {/* Desktop actions */}
+          <div className="hidden items-center gap-3 lg:flex">
             <Link href="/dashboard" className="text-sm font-bold text-ink-2 transition hover:text-ink">Sign in</Link>
             <Link href="/signup" className="inline-flex min-h-10 items-center gap-2 rounded-xl bg-accent px-4 text-sm font-extrabold text-ink shadow-[0_12px_28px_rgba(245,158,11,0.2)] transition hover:-translate-y-0.5 hover:bg-accent-pressed">
               Get started <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
+
+          {/* Mobile hamburger */}
+          <button
+            type="button"
+            onClick={() => setMenuOpen((open) => !open)}
+            aria-label={menuOpen ? "Close menu" : "Open menu"}
+            aria-expanded={menuOpen}
+            aria-controls="mobile-menu"
+            className="grid h-11 w-11 place-items-center rounded-xl border border-line bg-white/70 text-ink transition hover:bg-white lg:hidden"
+          >
+            {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
         </div>
+
+        {/* Mobile menu panel */}
+        <AnimatePresence initial={false}>
+          {menuOpen ? (
+            <motion.div
+              id="mobile-menu"
+              key="mobile-menu"
+              initial={reduceMotion ? { opacity: 0 } : { opacity: 0, height: 0 }}
+              animate={reduceMotion ? { opacity: 1 } : { opacity: 1, height: "auto" }}
+              exit={reduceMotion ? { opacity: 0 } : { opacity: 0, height: 0 }}
+              transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
+              className="overflow-hidden border-t border-line/70 bg-paper/95 backdrop-blur-xl lg:hidden"
+            >
+              <div className="mx-auto flex max-w-[1180px] flex-col gap-1 px-5 py-4 sm:px-6">
+                {navItems.map((item) => {
+                  const active = pathname === item.href;
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className={`rounded-xl px-4 py-3 text-base font-bold transition ${active ? "bg-brand-tonal text-brand" : "text-ink-2 hover:bg-white/70 hover:text-ink"}`}
+                    >
+                      {item.label}
+                    </Link>
+                  );
+                })}
+                <div className="mt-2 flex flex-col gap-2 border-t border-line/70 pt-3">
+                  <Link href="/dashboard" className="rounded-xl px-4 py-3 text-base font-bold text-ink-2 transition hover:bg-white/70 hover:text-ink">Sign in</Link>
+                  <Link href="/signup" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-accent px-4 text-base font-extrabold text-ink shadow-[0_12px_28px_rgba(245,158,11,0.2)] transition hover:bg-accent-pressed">
+                    Get started <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </div>
+              </div>
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
       </nav>
 
       <AnimatePresence mode="wait">
