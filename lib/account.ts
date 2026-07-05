@@ -40,6 +40,7 @@ export interface AppProfile {
   resumeAccent?: string;
   resumePhotoOn?: boolean;
   resumeFont?: string;
+  resumeFontScale?: number;
 }
 
 export async function googleSignIn(): Promise<User> {

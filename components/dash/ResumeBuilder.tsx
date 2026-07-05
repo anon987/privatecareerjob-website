@@ -28,6 +28,14 @@ function tintOf(hex: string, alpha: number): string {
 
 /** null = app default font (Manrope); otherwise a Google family name. */
 const FontCtx = createContext<string | null>(null);
+/** multiplier applied to every paper font size (text-size control). */
+const SizeCtx = createContext<number>(1);
+
+/** Keep the resume to a single page: cap free-text fields to a word budget. */
+function clampWords(text: string, max: number): string {
+  const words = text.trim().split(/\s+/).filter(Boolean);
+  return words.length <= max ? text : words.slice(0, max).join(" ") + "…";
+}
 
 function usePaperFont(weight: number, fallbackSerif?: boolean): React.CSSProperties {
   const fam = useContext(FontCtx);
@@ -177,8 +185,9 @@ function PaperText({
   serif?: boolean;
 }) {
   const f = usePaperFont(weight, serif);
+  const sc = useContext(SizeCtx);
   return (
-    <div style={{ fontSize: size, lineHeight: `${Math.round(size * 1.4)}px`, color, marginTop: spacingTop, fontStyle: italic ? "italic" : "normal", letterSpacing: tracking, ...f }}>
+    <div style={{ fontSize: size * sc, lineHeight: `${Math.round(size * sc * 1.4)}px`, color, marginTop: spacingTop, fontStyle: italic ? "italic" : "normal", letterSpacing: tracking, ...f }}>
       {upper && typeof children === "string" ? children.toUpperCase() : children}
     </div>
   );
@@ -187,9 +196,10 @@ function PaperText({
 function Section({ title, accent, spec, children }: { title: string; accent: string; spec: TemplateSpec; children: React.ReactNode }) {
   const noRule = spec.rules === false && spec.layout === "single";
   const f = usePaperFont(700, spec.serif);
+  const sc = useContext(SizeCtx);
   return (
     <div style={{ marginTop: noRule ? 18 : spec.compact ? 12 : 16 }}>
-      <div style={{ fontSize: spec.compact ? 10 : 11, letterSpacing: noRule ? 1.8 : 1.2, color: accent, paddingBottom: noRule ? 0 : 3, borderBottom: noRule ? "none" : `1px solid ${RULE}`, ...f }}>
+      <div style={{ fontSize: (spec.compact ? 10 : 11) * sc, letterSpacing: noRule ? 1.8 : 1.2, color: accent, paddingBottom: noRule ? 0 : 3, borderBottom: noRule ? "none" : `1px solid ${RULE}`, ...f }}>
         {title.toUpperCase()}
       </div>
       <div style={{ marginTop: 6 }}>{children}</div>
@@ -248,11 +258,12 @@ function TimelineList({ items, accent, spec }: { items: Exp[]; accent: string; s
 
 function SkillBars({ skills, track, fill, labelColor, max = 8 }: { skills: string[]; track: string; fill: string; labelColor: string; max?: number }) {
   const f = usePaperFont(400);
+  const sc = useContext(SizeCtx);
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
       {skills.slice(0, max).map((s, i) => (
         <div key={s} style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-          <span style={{ color: labelColor, fontSize: 8.5, lineHeight: "12px", ...f }}>{s}</span>
+          <span style={{ color: labelColor, fontSize: 8.5 * sc, lineHeight: `${12 * sc}px`, ...f }}>{s}</span>
           <div style={{ height: 4, borderRadius: 2, background: track, overflow: "hidden" }}>
             <div style={{ width: `${58 + ((i * 37) % 38)}%`, height: "100%", borderRadius: 2, background: fill }} />
           </div>
@@ -286,9 +297,10 @@ function sidePalette(tone: SideTone, accent: string): SidePalette {
 
 function SideBlock({ title, pal, children }: { title: string; pal: SidePalette; children: React.ReactNode }) {
   const f = usePaperFont(700);
+  const sc = useContext(SizeCtx);
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
-      <span style={{ color: pal.title, fontSize: 8.5, letterSpacing: 1.4, ...f }}>{title.toUpperCase()}</span>
+      <span style={{ color: pal.title, fontSize: 8.5 * sc, letterSpacing: 1.4, ...f }}>{title.toUpperCase()}</span>
       <div style={{ height: 1, background: pal.rule, marginBottom: 2 }} />
       {children}
     </div>
@@ -297,7 +309,8 @@ function SideBlock({ title, pal, children }: { title: string; pal: SidePalette; 
 
 function SideText({ children, pal, faint }: { children: React.ReactNode; pal: SidePalette; faint?: boolean }) {
   const f = usePaperFont(400);
-  return <span style={{ color: faint ? pal.faint : pal.text, fontSize: 8.5, lineHeight: "12px", display: "block", ...f }}>{children}</span>;
+  const sc = useContext(SizeCtx);
+  return <span style={{ color: faint ? pal.faint : pal.text, fontSize: 8.5 * sc, lineHeight: `${12 * sc}px`, display: "block", ...f }}>{children}</span>;
 }
 
 function SidebarResume({ data, spec, accent, showPhoto }: { data: ResumeData; spec: TemplateSpec; accent: string; showPhoto: boolean }) {
@@ -584,6 +597,12 @@ function ScaledPreview({ children, max = 460 }: { children: React.ReactNode; max
 const btn = "inline-flex items-center justify-center min-h-11 px-5 rounded-2xl font-bold text-[14px] transition cursor-pointer press";
 const cardCls = "bg-white border border-line rounded-3xl p-5 shadow-[0_2px_14px_rgba(17,24,39,0.04)]";
 const inputCls = "w-full min-h-11 px-3.5 rounded-[14px] border border-line bg-paper outline-none focus:border-brand focus:ring-[3px] focus:ring-brand/15 transition";
+const TEXT_SIZES: { label: string; v: number }[] = [
+  { label: "S", v: 0.92 },
+  { label: "M", v: 1 },
+  { label: "L", v: 1.08 },
+  { label: "XL", v: 1.16 },
+];
 
 type DetailKey = "name" | "headline" | "phone" | "location" | "summary";
 
@@ -601,6 +620,8 @@ interface EditorProps {
   fontId: string;
   onFont: (id: string) => void;
   fam: string | null;
+  fontScale: number;
+  onFontScale: (v: number) => void;
   details: Record<DetailKey, string>;
   onDetail: (key: DetailKey, value: string) => void;
   onBack: () => void;
@@ -615,7 +636,7 @@ interface EditorProps {
 type ToolId = "templates" | "color" | "font" | "photo" | "edit";
 
 function ResumeEditor(props: EditorProps) {
-  const { spec, display, bare, counts, accent, onAccent, showPhoto, onPhoto, photoAvailable, fontId, onFont, fam, details, onDetail, onBack, onPickSibling, onDownload, onSave, busy, note, printRef } = props;
+  const { spec, display, bare, counts, accent, onAccent, showPhoto, onPhoto, photoAvailable, fontId, onFont, fam, fontScale, onFontScale, details, onDetail, onBack, onPickSibling, onDownload, onSave, busy, note, printRef } = props;
   const [tool, setTool] = useState<ToolId | null>(null); // null = no mobile sheet open
   const [family, setFamily] = useState<Kind>(spec.kind); // which family the Templates panel browses
 
@@ -669,11 +690,22 @@ function ResumeEditor(props: EditorProps) {
   );
 
   const fontPanel = (
-    <select value={fontId} onChange={(e) => onFont(e.target.value)} className={`${inputCls} px-3`}>
-      {WEB_FONTS.map((f) => (
-        <option key={f.id} value={f.id}>{f.id === "system" ? "Default (Manrope)" : f.family}{f.serif ? " (serif)" : ""}</option>
-      ))}
-    </select>
+    <div>
+      <select value={fontId} onChange={(e) => onFont(e.target.value)} className={`${inputCls} px-3`}>
+        {WEB_FONTS.map((f) => (
+          <option key={f.id} value={f.id}>{f.id === "system" ? "Default (Manrope)" : f.family}{f.serif ? " (serif)" : ""}</option>
+        ))}
+      </select>
+      <p className="text-[12.5px] font-semibold text-ink-2 mt-4 mb-2">Text size</p>
+      <div className="grid grid-cols-4 gap-1.5">
+        {TEXT_SIZES.map((o) => (
+          <button key={o.label} onClick={() => onFontScale(o.v)} className={`min-h-9 rounded-[10px] text-[12.5px] font-bold transition ${Math.abs(fontScale - o.v) < 0.001 ? "bg-brand text-white" : "bg-sunken text-ink-2 hover:text-ink"}`}>
+            {o.label}
+          </button>
+        ))}
+      </div>
+      <p className="text-[11.5px] text-ink-3 mt-2">Larger text may push the resume past one page.</p>
+    </div>
   );
 
   const photoPanel = (
@@ -744,7 +776,9 @@ function ResumeEditor(props: EditorProps) {
         <div className="rounded-2xl border border-line bg-sunken p-4 sm:p-6">
           <ScaledPreview>
             <FontCtx.Provider value={fam}>
-              <ResumePreview data={display} spec={spec} accent={accent} showPhoto={showPhoto} />
+              <SizeCtx.Provider value={fontScale}>
+                <ResumePreview data={display} spec={spec} accent={accent} showPhoto={showPhoto} />
+              </SizeCtx.Provider>
             </FontCtx.Provider>
           </ScaledPreview>
           <p className="text-[12px] text-ink-3 text-center mt-3">
@@ -792,7 +826,9 @@ function ResumeEditor(props: EditorProps) {
       <div aria-hidden style={{ position: "absolute", width: 0, height: 0, overflow: "hidden" }}>
         <div ref={printRef} style={{ width: BASE }}>
           <FontCtx.Provider value={fam}>
-            <ResumePreview data={display} spec={spec} accent={accent} showPhoto={showPhoto} />
+            <SizeCtx.Provider value={fontScale}>
+              <ResumePreview data={display} spec={spec} accent={accent} showPhoto={showPhoto} />
+            </SizeCtx.Provider>
           </FontCtx.Provider>
         </div>
       </div>
@@ -811,6 +847,7 @@ export default function ResumeBuilder() {
   const [accent, setAccent] = useState<string>(profile.resumeAccent ?? savedSpec?.accent ?? COLORS[1].hex);
   const [showPhoto, setShowPhoto] = useState<boolean>(profile.resumePhotoOn ?? true);
   const [fontId, setFontId] = useState<string>(profile.resumeFont ?? "system");
+  const [fontScale, setFontScale] = useState<number>(profile.resumeFontScale ?? 1);
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState("");
 
@@ -836,6 +873,8 @@ export default function ResumeBuilder() {
     document.head.appendChild(l);
   }, [fam]);
 
+  // Single-page budget: cap free text (About me / experience descriptions) and
+  // the number of entries so the resume fits one A4 page at the default size.
   const data: ResumeData = useMemo(
     () => ({
       name,
@@ -843,12 +882,12 @@ export default function ResumeBuilder() {
       email: user.email ?? "",
       phone,
       location,
-      summary,
-      skills: profile.skills ?? [],
-      experience: (profile.experience ?? []).map((e) => ({ role: e.role ?? "", company: e.company ?? "", period: e.period ?? "", description: e.description ?? "" })),
-      education: (profile.education ?? []).map((e) => ({ degree: e.degree ?? "", school: e.school ?? "", year: e.year ?? "" })),
-      languages: profile.languages ?? [],
-      certificates: (profile.certificates ?? []).map((c) => ({ name: c.name ?? "", issuer: c.issuer ?? "", year: c.year ?? "" })),
+      summary: clampWords(summary, 55),
+      skills: (profile.skills ?? []).slice(0, 14),
+      experience: (profile.experience ?? []).slice(0, 5).map((e) => ({ role: e.role ?? "", company: e.company ?? "", period: e.period ?? "", description: clampWords(e.description ?? "", 32) })),
+      education: (profile.education ?? []).slice(0, 4).map((e) => ({ degree: e.degree ?? "", school: e.school ?? "", year: e.year ?? "" })),
+      languages: (profile.languages ?? []).slice(0, 6),
+      certificates: (profile.certificates ?? []).slice(0, 4).map((c) => ({ name: c.name ?? "", issuer: c.issuer ?? "", year: c.year ?? "" })),
       photoUri: profile.photoUri || undefined,
     }),
     [name, headline, phone, location, summary, user.email, profile.skills, profile.experience, profile.education, profile.languages, profile.certificates, profile.photoUri]
@@ -881,6 +920,7 @@ export default function ResumeBuilder() {
         resumeAccent: accent,
         resumePhotoOn: showPhoto,
         resumeFont: fontId,
+        resumeFontScale: fontScale,
       });
       await refresh().catch(() => {});
       setNote("Saved ✓");
@@ -969,6 +1009,8 @@ export default function ResumeBuilder() {
       fontId={fontId}
       onFont={setFontId}
       fam={fam}
+      fontScale={fontScale}
+      onFontScale={setFontScale}
       details={{ name, headline, phone, location, summary }}
       onDetail={onDetail}
       onBack={() => setSpec(null)}
