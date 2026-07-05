@@ -1,6 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { LayoutGrid, Palette, Type, ImageIcon, Pencil, X } from "lucide-react";
 import { useDash } from "./Shell";
 import { updateMyProfile } from "@/lib/account";
 import { WEB_FONTS } from "@/lib/themes";
@@ -542,25 +543,35 @@ function TemplateThumb({ spec }: { spec: TemplateSpec }) {
   );
 }
 
-/** Editor preview — measures natural height and scales the paper to fit the column. */
-function ScaledPreview({ children }: { children: React.ReactNode }) {
-  const [wrapRef, width] = useWidth<HTMLDivElement>();
-  const innerRef = useRef<HTMLDivElement>(null);
-  const [h, setH] = useState(BASE * 1.414);
-  const display = Math.min(width || BASE, 460);
-  const scale = display / BASE;
+/** Editor preview — scales the fixed-width paper to fit its column and reserves
+ *  the correct (scaled) height. Measures width of the column and natural height
+ *  of the paper; both are read synchronously before paint. */
+function ScaledPreview({ children, max = 460 }: { children: React.ReactNode; max?: number }) {
+  // `sizer` reports the TRUE available width (it has no wide content, so the
+  // unscaled BASE-width paper can't inflate the measurement). `inner` gives the
+  // paper's natural height so we can reserve the correct scaled height.
+  const sizer = useRef<HTMLDivElement>(null);
+  const inner = useRef<HTMLDivElement>(null);
+  const [dims, setDims] = useState({ w: 0, h: 0 });
   useLayoutEffect(() => {
-    const el = innerRef.current;
-    if (!el) return;
-    const ro = new ResizeObserver(() => setH(el.offsetHeight));
-    ro.observe(el);
-    setH(el.offsetHeight);
+    const s = sizer.current;
+    const i = inner.current;
+    if (!s || !i) return;
+    const measure = () => setDims({ w: s.clientWidth, h: i.offsetHeight });
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(s);
+    ro.observe(i);
     return () => ro.disconnect();
-  });
+  }, []);
+  const display = Math.min(dims.w || max, max);
+  const scale = display / BASE;
+  const height = dims.h ? dims.h * scale : display * 1.414;
   return (
-    <div ref={wrapRef} style={{ width: "100%", display: "flex", justifyContent: "center" }}>
-      <div style={{ width: display, height: h * scale }}>
-        <div ref={innerRef} style={{ width: BASE, transformOrigin: "top left", transform: `scale(${scale})`, filter: "drop-shadow(0 12px 40px rgba(17,24,39,0.12))" }}>
+    <div style={{ width: "100%", overflow: "hidden" }}>
+      <div ref={sizer} style={{ width: "100%", height: 0 }} />
+      <div style={{ width: display, height, margin: "0 auto" }}>
+        <div ref={inner} style={{ width: BASE, transformOrigin: "top left", transform: `scale(${scale})`, filter: "drop-shadow(0 12px 40px rgba(17,24,39,0.14))" }}>
           {children}
         </div>
       </div>
@@ -568,10 +579,188 @@ function ScaledPreview({ children }: { children: React.ReactNode }) {
   );
 }
 
-/* ---------------------------------- screen ---------------------------------- */
+/* ---------------------------------- editor (presentational) ---------------------------------- */
 
 const btn = "inline-flex items-center justify-center min-h-11 px-5 rounded-2xl font-bold text-[14px] transition cursor-pointer press";
 const cardCls = "bg-white border border-line rounded-3xl p-5 shadow-[0_2px_14px_rgba(17,24,39,0.04)]";
+const inputCls = "w-full min-h-11 px-3.5 rounded-[14px] border border-line bg-paper outline-none focus:border-brand focus:ring-[3px] focus:ring-brand/15 transition";
+
+type DetailKey = "name" | "headline" | "phone" | "location" | "summary";
+
+interface EditorProps {
+  spec: TemplateSpec;
+  siblings: TemplateSpec[];
+  display: ResumeData;
+  bare: boolean;
+  counts: { exp: number; edu: number; skills: number };
+  accent: string;
+  onAccent: (hex: string) => void;
+  showPhoto: boolean;
+  onPhoto: (b: boolean) => void;
+  photoAvailable: boolean;
+  fontId: string;
+  onFont: (id: string) => void;
+  fam: string | null;
+  details: Record<DetailKey, string>;
+  onDetail: (key: DetailKey, value: string) => void;
+  onBack: () => void;
+  onPickSibling: (t: TemplateSpec) => void;
+  onDownload: () => void;
+  onSave: () => void;
+  busy: boolean;
+  note: string;
+  printRef: React.RefObject<HTMLDivElement | null>;
+}
+
+type ToolId = "templates" | "color" | "font" | "photo" | "edit";
+
+function ResumeEditor(props: EditorProps) {
+  const { spec, siblings, display, bare, counts, accent, onAccent, showPhoto, onPhoto, photoAvailable, fontId, onFont, fam, details, onDetail, onBack, onPickSibling, onDownload, onSave, busy, note, printRef } = props;
+  const [tool, setTool] = useState<ToolId | null>(null);
+
+  const templatesPanel = (
+    <div className="flex gap-2.5 overflow-x-auto pb-1 -mx-1 px-1">
+      {siblings.map((t) => (
+        <button key={t.key} onClick={() => onPickSibling(t)} className="shrink-0 w-[88px] text-left cursor-pointer">
+          <div className={`rounded-[10px] p-0.5 border-2 ${t.key === spec.key ? "border-brand" : "border-transparent"}`}>
+            <TemplateThumb spec={t} />
+          </div>
+          <p className={`text-[11px] font-semibold mt-1 truncate text-center ${t.key === spec.key ? "text-brand" : "text-ink-3"}`}>{t.name.split(" ")[0]}</p>
+        </button>
+      ))}
+    </div>
+  );
+
+  const colorPanel = (
+    <div className="flex flex-wrap gap-2.5">
+      {COLORS.map((c) => (
+        <button key={c.id} onClick={() => onAccent(c.hex)} aria-label={`Accent ${c.name}`} className={`w-9 h-9 rounded-full grid place-items-center text-white text-[13px] transition ${c.hex === accent ? "ring-2 ring-offset-2 ring-brand" : ""}`} style={{ background: c.hex }}>
+          {c.hex === accent ? "✓" : ""}
+        </button>
+      ))}
+    </div>
+  );
+
+  const fontPanel = (
+    <select value={fontId} onChange={(e) => onFont(e.target.value)} className={`${inputCls} px-3`}>
+      {WEB_FONTS.map((f) => (
+        <option key={f.id} value={f.id}>{f.id === "system" ? "Default (Manrope)" : f.family}{f.serif ? " (serif)" : ""}</option>
+      ))}
+    </select>
+  );
+
+  const photoPanel = (
+    <div>
+      <label className="flex items-center justify-between gap-3 cursor-pointer">
+        <span className="text-[14px] font-semibold">Show photo</span>
+        <input type="checkbox" checked={showPhoto} onChange={(e) => onPhoto(e.target.checked)} className="w-5 h-5 accent-brand" />
+      </label>
+      {!photoAvailable && <p className="text-[12px] text-ink-3 mt-1.5">No photo yet — a monogram is shown. Add a photo in the app.</p>}
+    </div>
+  );
+
+  const detailsPanel = (
+    <div className="space-y-2.5">
+      <input value={details.name} onChange={(e) => onDetail("name", e.target.value)} placeholder="Full name" className={inputCls} />
+      <input value={details.headline} onChange={(e) => onDetail("headline", e.target.value)} placeholder="Headline" className={inputCls} />
+      <input value={details.phone} onChange={(e) => onDetail("phone", e.target.value)} placeholder="Phone" className={inputCls} />
+      <input value={details.location} onChange={(e) => onDetail("location", e.target.value)} placeholder="Location" className={inputCls} />
+      <textarea value={details.summary} onChange={(e) => onDetail("summary", e.target.value)} rows={3} placeholder="Professional summary" className={`${inputCls} min-h-0 py-3 resize-y`} />
+      <p className="text-[12px] text-ink-3">Skills, experience & education are edited on the Profile tab.</p>
+    </div>
+  );
+
+  const tools: { id: ToolId; label: string; title: string; Icon: typeof LayoutGrid; panel: React.ReactNode }[] = [
+    { id: "templates", label: "Templates", title: spec.kind === "text" ? "Text templates" : "Visual themes", Icon: LayoutGrid, panel: templatesPanel },
+    { id: "color", label: "Color", title: "Accent color", Icon: Palette, panel: colorPanel },
+    { id: "font", label: "Font", title: "Font", Icon: Type, panel: fontPanel },
+    ...(spec.kind === "visual" ? [{ id: "photo" as ToolId, label: "Photo", title: "Photo", Icon: ImageIcon, panel: photoPanel }] : []),
+    { id: "edit", label: "Details", title: "Your details", Icon: Pencil, panel: detailsPanel },
+  ];
+  const activeTool = tools.find((t) => t.id === tool);
+
+  return (
+    <div className="relative pb-24 lg:pb-0">
+      {/* top bar */}
+      <div className="flex flex-wrap items-center gap-3">
+        <button onClick={onBack} className="inline-flex items-center gap-1.5 text-[13.5px] font-bold text-ink-2 hover:text-ink cursor-pointer">← Templates</button>
+        <div className="flex-1 min-w-[120px]">
+          <h1 className="text-[18px] font-extrabold leading-tight">{spec.name}</h1>
+          <p className="text-[12px] text-ink-3">{spec.kind === "text" ? "Text · ATS-friendly" : "Visual theme"}</p>
+        </div>
+        <button onClick={onDownload} className={`${btn} border border-line hover:bg-sunken`}>Download PDF</button>
+        <button onClick={onSave} disabled={busy} className={`${btn} bg-accent hover:bg-accent-pressed text-ink disabled:opacity-50`}>{busy ? "Saving…" : "Save"}</button>
+      </div>
+
+      <div className="mt-4 lg:grid lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-6 lg:items-start">
+        {/* canvas */}
+        <div className="rounded-2xl border border-line bg-sunken p-4 sm:p-6 lg:sticky lg:top-20">
+          <ScaledPreview>
+            <FontCtx.Provider value={fam}>
+              <ResumePreview data={display} spec={spec} accent={accent} showPhoto={showPhoto} />
+            </FontCtx.Provider>
+          </ScaledPreview>
+          <p className="text-[12px] text-ink-3 text-center mt-3">
+            {bare ? "Sample content shown — fill your Profile and it appears here. Samples are never saved or downloaded." : `From your profile · ${counts.exp} exp · ${counts.edu} edu · ${counts.skills} skills`}
+          </p>
+        </div>
+
+        {/* desktop tools panel (right) */}
+        <aside className="hidden lg:block space-y-4">
+          {tools.map((t) => (
+            <section key={t.id} className={cardCls}>
+              <h2 className="text-[14px] font-extrabold mb-3">{t.title}</h2>
+              {t.panel}
+            </section>
+          ))}
+          {note && <p className="text-[13.5px] font-semibold text-green-600">{note}</p>}
+        </aside>
+      </div>
+
+      {/* mobile bottom tool bar */}
+      <div className="lg:hidden fixed bottom-0 inset-x-0 z-40 border-t border-line bg-white/95 backdrop-blur">
+        <div className="mx-auto max-w-[1020px] flex">
+          {tools.map((t) => {
+            const on = tool === t.id;
+            return (
+              <button key={t.id} onClick={() => setTool(on ? null : t.id)} aria-pressed={on} className="flex-1 min-h-[58px] flex flex-col items-center justify-center gap-1 cursor-pointer">
+                <t.Icon className={`h-[20px] w-[20px] ${on ? "text-brand" : "text-ink-2"}`} />
+                <span className={`text-[11px] font-bold ${on ? "text-brand" : "text-ink-2"}`}>{t.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* mobile bottom sheet */}
+      {activeTool && (
+        <div className="lg:hidden fixed inset-0 z-50">
+          <div className="absolute inset-0 bg-black/30" onClick={() => setTool(null)} />
+          <div className="absolute inset-x-0 bottom-0 rounded-t-3xl border-t border-line bg-white max-h-[72vh] overflow-y-auto p-5 pb-8">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-[16px] font-extrabold">{activeTool.title}</h2>
+              <button onClick={() => setTool(null)} aria-label="Close" className="grid h-9 w-9 place-items-center rounded-xl border border-line text-ink cursor-pointer"><X className="h-4 w-4" /></button>
+            </div>
+            {activeTool.panel}
+            {note && <p className="text-[13.5px] font-semibold text-green-600 mt-3">{note}</p>}
+          </div>
+        </div>
+      )}
+
+      {/* offscreen, unscaled copy used for the PDF print window — isolated in a
+          zero-size clipping box so it can never affect page layout/width */}
+      <div aria-hidden style={{ position: "absolute", width: 0, height: 0, overflow: "hidden" }}>
+        <div ref={printRef} style={{ width: BASE }}>
+          <FontCtx.Provider value={fam}>
+            <ResumePreview data={display} spec={spec} accent={accent} showPhoto={showPhoto} />
+          </FontCtx.Provider>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ---------------------------------- screen (stateful) ---------------------------------- */
 
 export default function ResumeBuilder() {
   const { user, profile, refresh } = useDash();
@@ -717,110 +906,38 @@ export default function ResumeBuilder() {
 
   /* ------------ editor ------------ */
   const siblings = TEMPLATES.filter((t) => t.kind === spec.kind);
+  const onDetail = (k: DetailKey, v: string) => {
+    if (k === "name") setName(v);
+    else if (k === "headline") setHeadline(v);
+    else if (k === "phone") setPhone(v);
+    else if (k === "location") setLocation(v);
+    else setSummary(v);
+  };
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-3">
-        <button onClick={() => setSpec(null)} className="inline-flex items-center gap-1.5 text-[13.5px] font-bold text-ink-2 hover:text-ink cursor-pointer">
-          ← Templates
-        </button>
-        <div className="flex-1 min-w-[120px]">
-          <h1 className="text-[18px] font-extrabold leading-tight">{spec.name}</h1>
-          <p className="text-[12px] text-ink-3">{spec.kind === "text" ? "Text · ATS-friendly" : "Visual theme"}</p>
-        </div>
-        <button onClick={download} className={`${btn} border border-line hover:bg-sunken`}>Download PDF</button>
-        <button onClick={save} disabled={busy} className={`${btn} bg-accent hover:bg-accent-pressed text-ink disabled:opacity-50`}>{busy ? "Saving…" : "Save"}</button>
-      </div>
-
-      <div className="grid gap-5 lg:grid-cols-[1fr_320px] items-start">
-        {/* preview */}
-        <div className="lg:sticky lg:top-20">
-          <ScaledPreview>
-            <FontCtx.Provider value={fam}>
-              <ResumePreview data={display} spec={spec} accent={accent} showPhoto={showPhoto} />
-            </FontCtx.Provider>
-          </ScaledPreview>
-          <p className="text-[12px] text-ink-3 text-center mt-3">
-            {bare
-              ? "Showing sample content — fill your Profile and it appears here. Samples are never saved or downloaded."
-              : `From your profile · ${data.experience.length} exp · ${data.education.length} edu · ${data.skills.length} skills`}
-          </p>
-        </div>
-
-        {/* controls */}
-        <div className="space-y-4">
-          <section className={cardCls}>
-            <h2 className="text-[14px] font-extrabold">{spec.kind === "text" ? "Text templates" : "Visual themes"}</h2>
-            <div className="mt-3 flex gap-2.5 overflow-x-auto pb-1">
-              {siblings.map((t) => (
-                <button key={t.key} onClick={() => { setSpec(t); setAccent(t.accent); }} className="shrink-0 w-[84px] text-left cursor-pointer">
-                  <div className={`rounded-[10px] p-0.5 border-2 ${t.key === spec.key ? "border-brand" : "border-transparent"}`}>
-                    <TemplateThumb spec={t} />
-                  </div>
-                  <p className={`text-[11px] font-semibold mt-1 truncate text-center ${t.key === spec.key ? "text-brand" : "text-ink-3"}`}>{t.name.split(" ")[0]}</p>
-                </button>
-              ))}
-            </div>
-          </section>
-
-          <section className={cardCls}>
-            <h2 className="text-[14px] font-extrabold">Accent color</h2>
-            <div className="mt-3 flex flex-wrap gap-2.5">
-              {COLORS.map((c) => (
-                <button
-                  key={c.id}
-                  onClick={() => setAccent(c.hex)}
-                  aria-label={`Accent ${c.name}`}
-                  className={`w-9 h-9 rounded-full grid place-items-center text-white text-[13px] transition ${c.hex === accent ? "ring-2 ring-offset-2 ring-brand" : ""}`}
-                  style={{ background: c.hex }}
-                >
-                  {c.hex === accent ? "✓" : ""}
-                </button>
-              ))}
-            </div>
-          </section>
-
-          <section className={cardCls}>
-            <h2 className="text-[14px] font-extrabold">Font</h2>
-            <select value={fontId} onChange={(e) => setFontId(e.target.value)} className="mt-3 w-full min-h-11 px-3 rounded-[14px] border border-line bg-paper outline-none focus:border-brand focus:ring-[3px] focus:ring-brand/15 transition">
-              {WEB_FONTS.map((f) => (
-                <option key={f.id} value={f.id}>{f.id === "system" ? "Default (Manrope)" : f.family}{f.serif ? " (serif)" : ""}</option>
-              ))}
-            </select>
-          </section>
-
-          {spec.kind === "visual" && (
-            <section className={cardCls}>
-              <label className="flex items-center justify-between gap-3 cursor-pointer">
-                <span className="text-[14px] font-extrabold">Show photo</span>
-                <input type="checkbox" checked={showPhoto} onChange={(e) => setShowPhoto(e.target.checked)} className="w-5 h-5 accent-brand" />
-              </label>
-              {!profile.photoUri && <p className="text-[12px] text-ink-3 mt-1.5">No photo yet — a monogram is shown. Add a photo in the app.</p>}
-            </section>
-          )}
-
-          <section className={cardCls}>
-            <h2 className="text-[14px] font-extrabold">Your details</h2>
-            <p className="text-[12px] text-ink-3 mt-1">Saved to your profile. Skills, experience & education are edited on the Profile tab.</p>
-            <div className="mt-3 space-y-2.5">
-              <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Full name" className="w-full min-h-11 px-3.5 rounded-[14px] border border-line bg-paper outline-none focus:border-brand focus:ring-[3px] focus:ring-brand/15 transition" />
-              <input value={headline} onChange={(e) => setHeadline(e.target.value)} placeholder="Headline" className="w-full min-h-11 px-3.5 rounded-[14px] border border-line bg-paper outline-none focus:border-brand focus:ring-[3px] focus:ring-brand/15 transition" />
-              <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Phone" className="w-full min-h-11 px-3.5 rounded-[14px] border border-line bg-paper outline-none focus:border-brand focus:ring-[3px] focus:ring-brand/15 transition" />
-              <input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Location" className="w-full min-h-11 px-3.5 rounded-[14px] border border-line bg-paper outline-none focus:border-brand focus:ring-[3px] focus:ring-brand/15 transition" />
-              <textarea value={summary} onChange={(e) => setSummary(e.target.value)} rows={3} placeholder="Professional summary" className="w-full py-3 px-3.5 rounded-[14px] border border-line bg-paper outline-none focus:border-brand focus:ring-[3px] focus:ring-brand/15 transition resize-y" />
-            </div>
-          </section>
-
-          {note && <p className="text-[13.5px] font-semibold text-green-600">{note}</p>}
-        </div>
-      </div>
-
-      {/* offscreen, unscaled copy used for the PDF print window */}
-      <div ref={printRef} aria-hidden style={{ position: "absolute", left: -100000, top: 0, width: BASE, pointerEvents: "none" }}>
-        <FontCtx.Provider value={fam}>
-          <ResumePreview data={display} spec={spec} accent={accent} showPhoto={showPhoto} />
-        </FontCtx.Provider>
-      </div>
-    </div>
+    <ResumeEditor
+      spec={spec}
+      siblings={siblings}
+      display={display}
+      bare={bare}
+      counts={{ exp: data.experience.length, edu: data.education.length, skills: data.skills.length }}
+      accent={accent}
+      onAccent={setAccent}
+      showPhoto={showPhoto}
+      onPhoto={setShowPhoto}
+      photoAvailable={!!profile.photoUri}
+      fontId={fontId}
+      onFont={setFontId}
+      fam={fam}
+      details={{ name, headline, phone, location, summary }}
+      onDetail={onDetail}
+      onBack={() => setSpec(null)}
+      onPickSibling={(t) => { setSpec(t); setAccent(t.accent); }}
+      onDownload={download}
+      onSave={save}
+      busy={busy}
+      note={note}
+      printRef={printRef}
+    />
   );
 }
