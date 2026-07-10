@@ -22,7 +22,6 @@ import {
   MessageCircle,
   MessageSquareText,
   Mic2,
-  PenLine,
   Radar,
   SearchCheck,
   ShieldCheck,
@@ -72,18 +71,16 @@ export const recruiterFeatures: Feature[] = [
 ];
 
 export const aiTools: AiTool[] = [
-  { icon: FileText, title: "AI Resume Builder", body: "Turn profile details into a structured, recruiter-ready resume preview.", badge: "Premium", cta: "Sign in to use" },
-  { icon: WandSparkles, title: "AI Resume Optimizer", body: "Show suggested edits for clarity, keywords, and role alignment.", badge: "Upcoming", cta: "Available after login" },
-  { icon: Gauge, title: "AI ATS Score Checker", body: "Preview how a resume may perform against job descriptions.", badge: "Preview", cta: "Sign in to use" },
-  { icon: PenLine, title: "AI Cover Letter Generator", body: "Draft tailored cover letter previews for selected opportunities.", badge: "Premium", cta: "Available after login" },
-  { icon: Mic2, title: "AI Interview Coach", body: "Practice answer structure with confidence and communication signals.", badge: "Beta", cta: "Sign in to use" },
-  { icon: Radar, title: "AI Job Match Assistant", body: "Surface role-fit previews based on profile, preferences, and skills.", badge: "Upcoming", cta: "Available after login" },
-  { icon: LineChart, title: "AI Skill Gap Analyzer", body: "Identify skills to improve for roles you want to target next.", badge: "Preview", cta: "Sign in to use" },
-  { icon: TrendingUp, title: "AI Salary Estimator", body: "Explore compensation ranges with context for location and experience.", badge: "Upcoming", cta: "Available after login" },
-  { icon: Map, title: "AI Career Roadmap", body: "Visualize next steps toward a better role with a practical growth path.", badge: "Premium", cta: "Sign in to use" },
-  { icon: UserCheck, title: "AI Profile Optimizer", body: "Improve the strength and completeness of your public candidate profile.", badge: "Preview", cta: "Available after login" },
-  { icon: Bot, title: "AI Recruiter Assistant", body: "Help hiring teams summarize candidate signals and next actions.", badge: "Recruiter", cta: "Sign in to use" },
-  { icon: ClipboardCheck, title: "AI Job Description Generator", body: "Create clear, structured job description previews for hiring teams.", badge: "Recruiter", cta: "Available after login" },
+  { icon: FileText, title: "AI Resume Builder", body: "Build a polished, ATS-friendly resume from your profile — free, unlike paid resume services.", badge: "Live", cta: "Sign in to use" },
+  { icon: WandSparkles, title: "AI Resume Optimizer", body: "Honest feedback, line-by-line rewrites, and a headline recruiters stop for.", badge: "Live", cta: "Sign in to use" },
+  { icon: Gauge, title: "AI ATS Score Checker", body: "Score your resume against a real job description before you apply.", badge: "Live", cta: "Sign in to use" },
+  { icon: Mic2, title: "AI Interview Coach", body: "Mock HR, technical, and English-practice rounds with feedback on every answer.", badge: "Live", cta: "Sign in to use" },
+  { icon: Radar, title: "AI Job Match Assistant", body: "An honest role-fit check plus a ready-to-send note for the recruiter.", badge: "Live", cta: "Sign in to use" },
+  { icon: UserCheck, title: "AI Profile Optimizer", body: "Keywords, headline, and summary tuned for how recruiters actually search.", badge: "Live", cta: "Sign in to use" },
+  { icon: TrendingUp, title: "AI Salary Estimator", body: "Realistic CTC ranges for your role and city — with monthly in-hand, not just CTC.", badge: "Live", cta: "Sign in to use" },
+  { icon: Map, title: "AI Career Roadmap", body: "Skill gaps and a practical step-by-step plan to the role you want next.", badge: "Live", cta: "Sign in to use" },
+  { icon: Bot, title: "AI Recruiter Assistant", body: "Help hiring teams summarize candidate signals and next actions.", badge: "Recruiter", cta: "Coming soon" },
+  { icon: ClipboardCheck, title: "AI Job Description Generator", body: "Create clear, structured job descriptions for hiring teams.", badge: "Recruiter", cta: "Coming soon" },
 ];
 
 const comparisons = ["Verified Employers", "Live Application Tracking", "Public Candidate Profile", "Built-in Resume", "Recruiter Chat", "AI Career Tools", "Modern Dashboard"];
