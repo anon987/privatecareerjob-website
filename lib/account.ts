@@ -2,7 +2,8 @@
 
 import { GoogleAuthProvider, signInWithPopup, signOut, type User } from "firebase/auth";
 import { deleteDoc, doc, getDoc, serverTimestamp, setDoc, updateDoc } from "firebase/firestore";
-import { auth, db } from "./firebaseClient";
+import { deleteObject, getDownloadURL, ref, uploadBytes } from "firebase/storage";
+import { auth, db, storage } from "./firebaseClient";
 import type { PublicSite, SiteDesign } from "./site";
 import { LEGACY_TEMPLATE_OF, WEB_FONTS } from "./themes";
 
@@ -61,6 +62,49 @@ export async function fetchProfile(uid: string): Promise<AppProfile | null> {
 /** Update my own users/{uid} doc (owner-only by rules). */
 export async function updateMyProfile(uid: string, partial: Record<string, unknown>): Promise<void> {
   await updateDoc(doc(db, "users", uid), partial);
+}
+
+/* ---- profile photo ---- */
+
+/** Downscale an image file to a square-ish JPEG so profile photos stay small. */
+async function downscaleImage(file: File, maxSide = 640): Promise<Blob> {
+  const url = URL.createObjectURL(file);
+  try {
+    const img = new Image();
+    await new Promise<void>((resolve, reject) => {
+      img.onload = () => resolve();
+      img.onerror = () => reject(new Error("That file doesn't look like an image."));
+      img.src = url;
+    });
+    const scale = Math.min(1, maxSide / Math.max(img.width, img.height));
+    const w = Math.max(1, Math.round(img.width * scale));
+    const h = Math.max(1, Math.round(img.height * scale));
+    const canvas = document.createElement("canvas");
+    canvas.width = w;
+    canvas.height = h;
+    canvas.getContext("2d")!.drawImage(img, 0, 0, w, h);
+    return await new Promise<Blob>((resolve, reject) =>
+      canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("Could not process the image."))), "image/jpeg", 0.85)
+    );
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+
+/** Upload a new profile photo, save its URL to users/{uid}.photoUri, return the URL. */
+export async function uploadProfilePhoto(uid: string, file: File): Promise<string> {
+  const blob = await downscaleImage(file);
+  const photoRef = ref(storage, `profilePhotos/${uid}.jpg`);
+  await uploadBytes(photoRef, blob, { contentType: "image/jpeg" });
+  const photoUri = await getDownloadURL(photoRef);
+  await updateMyProfile(uid, { photoUri });
+  return photoUri;
+}
+
+/** Remove the profile photo (clears photoUri; storage delete is best-effort). */
+export async function removeProfilePhoto(uid: string): Promise<void> {
+  await updateMyProfile(uid, { photoUri: "" });
+  await deleteObject(ref(storage, `profilePhotos/${uid}.jpg`)).catch(() => {});
 }
 
 /** Load my app profile; creates a starter seeker account (+ role registry entry,

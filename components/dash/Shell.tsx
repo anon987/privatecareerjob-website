@@ -1,10 +1,10 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { onAuthStateChanged, type User } from "firebase/auth";
-import { Menu, X } from "lucide-react";
+import { ChevronDown, LogOut, Menu, UserRound, X } from "lucide-react";
 import { auth } from "@/lib/firebaseClient";
 import { ensureAccount, googleSignIn, webSignOut, type AppProfile } from "@/lib/account";
 
@@ -40,6 +40,97 @@ const TABS = [
   { href: "/dashboard/resume", label: "Resume" },
   { href: "/dashboard/website", label: "My page" },
 ];
+
+function accountInitials(name?: string, email?: string): string {
+  const parts = (name || email || "?").trim().split(/\s+/).filter(Boolean);
+  return ((parts[0]?.[0] ?? "?") + (parts[1]?.[0] ?? "")).toUpperCase();
+}
+
+function Avatar({ profile, user, size = "w-8 h-8 text-[12px]" }: { profile: AppProfile; user: User; size?: string }) {
+  return (
+    <span aria-hidden className={`grid place-items-center ${size} rounded-full bg-brand-tonal text-brand font-extrabold shrink-0 overflow-hidden`}>
+      {profile.photoUri ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={profile.photoUri} alt="" className="w-full h-full object-cover" />
+      ) : (
+        accountInitials(profile.fullName, user.email ?? undefined)
+      )}
+    </span>
+  );
+}
+
+/** Avatar + name in the nav; click opens a small account menu with sign out. */
+function AccountMenu({ user, profile }: { user: User; profile: AppProfile }) {
+  const [open, setOpen] = useState(false);
+  const boxRef = useRef<HTMLDivElement>(null);
+  const pathname = usePathname();
+
+  useEffect(() => setOpen(false), [pathname]);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent) => {
+      if (boxRef.current && !boxRef.current.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  const firstName = (profile.fullName || "").split(/\s+/)[0] || user.email || "Account";
+
+  return (
+    <div ref={boxRef} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        aria-haspopup="menu"
+        aria-label="Account menu"
+        className="flex items-center gap-2 rounded-full border border-line pl-1 pr-2.5 py-1 hover:bg-sunken transition cursor-pointer focus-visible:ring-2 focus-visible:ring-brand"
+      >
+        <Avatar profile={profile} user={user} />
+        <span className="text-[13.5px] font-bold text-ink max-w-[140px] truncate">{firstName}</span>
+        <ChevronDown className={`h-3.5 w-3.5 text-ink-3 transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
+
+      {open && (
+        <div role="menu" className="absolute right-0 top-full mt-2 w-64 rounded-2xl border border-line bg-white shadow-[0_18px_60px_rgba(17,24,39,0.12)] p-2 z-50">
+          <div className="flex items-center gap-3 px-3 py-2.5">
+            <Avatar profile={profile} user={user} size="w-10 h-10 text-[14px]" />
+            <div className="min-w-0">
+              <p className="text-[13.5px] font-extrabold truncate">{profile.fullName || "Your account"}</p>
+              <p className="text-[12px] text-ink-3 truncate">{user.email}</p>
+            </div>
+          </div>
+          <div className="my-1 h-px bg-line" />
+          <Link
+            href="/dashboard/profile"
+            role="menuitem"
+            onClick={() => setOpen(false)}
+            className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-[13.5px] font-bold text-ink hover:bg-sunken transition"
+          >
+            <UserRound className="h-4 w-4 text-ink-3" /> View profile
+          </Link>
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => webSignOut()}
+            className="w-full flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-[13.5px] font-bold text-red-600 hover:bg-red-50 transition cursor-pointer"
+          >
+            <LogOut className="h-4 w-4" /> Sign out
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
 
 function GoogleIcon() {
   return (
@@ -151,9 +242,8 @@ export function Shell({ children }: { children: React.ReactNode }) {
                 <span className="grid place-items-center w-8 h-8 rounded-[9px] bg-brand text-white text-[17px]">P</span>
                 <span className="hidden sm:inline">privatesectorjob</span>
               </Link>
-              <div className="hidden md:flex items-center gap-3 text-[13.5px]">
-                <span className="text-ink-2">{profile.fullName || user.email}</span>
-                <button onClick={() => webSignOut()} className="font-bold text-brand cursor-pointer">Sign out</button>
+              <div className="hidden md:block">
+                <AccountMenu user={user} profile={profile} />
               </div>
               <button
                 type="button"
@@ -203,7 +293,10 @@ export function Shell({ children }: { children: React.ReactNode }) {
                   })}
                 </nav>
                 <div className="mt-2 flex items-center justify-between gap-3 border-t border-line px-1 pt-3 text-[13.5px]">
-                  <span className="text-ink-2 truncate">{profile.fullName || user.email}</span>
+                  <Link href="/dashboard/profile" onClick={() => setMenuOpen(false)} className="flex items-center gap-2.5 min-w-0">
+                    <Avatar profile={profile} user={user} />
+                    <span className="text-ink font-bold truncate">{profile.fullName || user.email}</span>
+                  </Link>
                   <button onClick={() => webSignOut()} className="font-bold text-brand cursor-pointer shrink-0">Sign out</button>
                 </div>
               </div>

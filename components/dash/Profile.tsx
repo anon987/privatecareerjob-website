@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useDash } from "./Shell";
 import { card } from "./bits";
 import ProfileAssistant from "./ai/ProfileAssistant";
-import { updateMyProfile } from "@/lib/account";
+import { removeProfilePhoto, updateMyProfile, uploadProfilePhoto } from "@/lib/account";
 
 /**
  * Job-seeker Profile editor — writes the same users/{uid} fields the app reads
@@ -145,6 +145,37 @@ export default function Profile() {
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState("");
   const [error, setError] = useState("");
+  const [photoBusy, setPhotoBusy] = useState(false);
+  const [photoError, setPhotoError] = useState("");
+  const photoInputRef = useRef<HTMLInputElement>(null);
+
+  const changePhoto = async (file: File | undefined) => {
+    if (!file) return;
+    setPhotoBusy(true);
+    setPhotoError("");
+    try {
+      await uploadProfilePhoto(user.uid, file);
+      await refresh().catch(() => {});
+    } catch (e) {
+      setPhotoError(e instanceof Error ? e.message : "Could not upload the photo — please try again.");
+    } finally {
+      setPhotoBusy(false);
+      if (photoInputRef.current) photoInputRef.current.value = "";
+    }
+  };
+
+  const removePhoto = async () => {
+    setPhotoBusy(true);
+    setPhotoError("");
+    try {
+      await removeProfilePhoto(user.uid);
+      await refresh().catch(() => {});
+    } catch (e) {
+      setPhotoError(e instanceof Error ? e.message : "Could not remove the photo — please try again.");
+    } finally {
+      setPhotoBusy(false);
+    }
+  };
 
   /** The exact object we persist — also used for the dirty check. */
   const build = () => ({
@@ -216,12 +247,44 @@ export default function Profile() {
   return (
     <div className="max-w-[860px] space-y-5 pb-24">
       <div className="rise flex flex-wrap items-center gap-4">
-        <span aria-hidden className="grid place-items-center w-14 h-14 rounded-2xl bg-brand-tonal text-brand text-[20px] font-extrabold shrink-0 overflow-hidden">
-          {profile.photoUri ? <img src={profile.photoUri} alt="" className="w-full h-full object-cover" /> : initials(fullName, user.email ?? undefined)}
-        </span>
+        <input
+          ref={photoInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={(e) => changePhoto(e.target.files?.[0])}
+        />
+        <button
+          type="button"
+          onClick={() => photoInputRef.current?.click()}
+          disabled={photoBusy}
+          aria-label={profile.photoUri ? "Change profile photo" : "Upload profile photo"}
+          title={profile.photoUri ? "Change profile photo" : "Upload profile photo"}
+          className="group relative grid place-items-center w-16 h-16 rounded-2xl bg-brand-tonal text-brand text-[20px] font-extrabold shrink-0 overflow-hidden cursor-pointer focus-visible:ring-4 focus-visible:ring-brand/20 disabled:cursor-wait"
+        >
+          {profile.photoUri ? (
+            <img src={profile.photoUri} alt="" className="w-full h-full object-cover" />
+          ) : (
+            initials(fullName, user.email ?? undefined)
+          )}
+          <span className={`absolute inset-0 grid place-items-center bg-black/45 text-white text-[10.5px] font-bold transition-opacity ${photoBusy ? "opacity-100" : "opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100"}`}>
+            {photoBusy ? "…" : "📷 Change"}
+          </span>
+        </button>
         <div className="min-w-0">
           <h1 className="text-[24px] font-extrabold tracking-[-0.4px] truncate">{fullName || "Your profile"}</h1>
           <p className="text-ink-2 text-[14px] truncate">{headline || "Add a headline recruiters will see first"}</p>
+          <div className="mt-1 flex items-center gap-3 text-[12.5px]">
+            <button type="button" onClick={() => photoInputRef.current?.click()} disabled={photoBusy} className="font-bold text-brand cursor-pointer disabled:opacity-50">
+              {photoBusy ? "Uploading…" : profile.photoUri ? "Change photo" : "Upload photo"}
+            </button>
+            {profile.photoUri && !photoBusy && (
+              <button type="button" onClick={removePhoto} className="font-bold text-ink-3 hover:text-red-500 cursor-pointer transition">
+                Remove
+              </button>
+            )}
+          </div>
+          {photoError && <p className="text-[12.5px] font-semibold text-red-600 mt-1">{photoError}</p>}
         </div>
       </div>
 
