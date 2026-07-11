@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import Link from "next/link";
 import { useDash } from "./Shell";
 import { card } from "./bits";
+import ProfileAssistant from "./ai/ProfileAssistant";
 import { updateMyProfile } from "@/lib/account";
 
 /**
@@ -179,6 +180,22 @@ export default function Profile() {
   ];
   const pct = Math.round((checks.filter(([, ok]) => ok).length / checks.length) * 100);
 
+  // Same 9 checks against the SAVED profile — the AI coach reads saved data,
+  // so its suggestions stay stable while the user types and refresh on save.
+  const savedChecks: [string, boolean][] = [
+    ["Name", !!profile.fullName],
+    ["Headline", !!profile.headline],
+    ["Phone", !!profile.phone],
+    ["Location", !!profile.location],
+    ["Skills", (profile.skills?.length ?? 0) > 0],
+    ["Experience", (profile.experience?.length ?? 0) > 0],
+    ["Education", (profile.education?.length ?? 0) > 0],
+    ["Languages", (profile.languages?.length ?? 0) > 0],
+    ["Projects", (profile.projects?.length ?? 0) > 0],
+  ];
+  const savedPct = Math.round((savedChecks.filter(([, ok]) => ok).length / savedChecks.length) * 100);
+  const savedMissing = savedChecks.filter(([, ok]) => !ok).map(([label]) => label);
+
   const save = async () => {
     setBusy(true);
     setError("");
@@ -225,6 +242,17 @@ export default function Profile() {
           ))}
         </div>
       </section>
+
+      {/* AI coach — fills drafts straight into the form; user reviews and saves */}
+      <ProfileAssistant
+        uid={user.uid}
+        profile={profile}
+        completenessPct={savedPct}
+        missing={savedMissing}
+        onApplyHeadline={setHeadline}
+        onApplySummary={setSummary}
+        onAddSkill={(s) => setSkills((prev) => Array.from(new Set([...prev, s])))}
+      />
 
       {/* basics */}
       <section className={card}>

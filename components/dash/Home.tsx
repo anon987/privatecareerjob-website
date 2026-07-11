@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useDash } from "./Shell";
 import { card, JobCard, StatCard, StatusPill, Skeletons } from "./bits";
+import { readProfileCoachTip } from "./ai/ProfileAssistant";
 import { loadMySite } from "@/lib/account";
 import type { PublicSite } from "@/lib/site";
 import {
@@ -49,10 +50,16 @@ export default function Home() {
   const { saved, ids: savedIds } = useSavedJobs(user.uid);
   const { threads } = useThreads(user.uid);
   const [site, setSite] = useState<PublicSite | null>(null);
+  const [coachTip, setCoachTip] = useState<string | null>(null);
 
   useEffect(() => {
     if (profile.publicHandle) loadMySite(profile.publicHandle).then(setSite).catch(() => {});
   }, [profile.publicHandle]);
+
+  // Latest cached AI coach tip — no AI call from Home, just a nudge.
+  useEffect(() => {
+    setCoachTip(readProfileCoachTip(user.uid));
+  }, [user.uid]);
 
   const { pct, missing } = completeness(profile);
   const active = apps.filter((a) => !TERMINAL.includes(a.status)).length;
@@ -179,7 +186,16 @@ export default function Home() {
                     <span key={m} className="px-2.5 py-1 rounded-full border border-line text-[11.5px] font-semibold text-ink-2">○ {m}</span>
                   ))}
                 </div>
-                <Link href="/dashboard/profile" className="inline-block text-[12px] font-bold text-brand mt-3">Complete your profile →</Link>
+                {coachTip && <p className="text-[12.5px] text-ink-2 mt-3 leading-relaxed">✨ <span className="font-bold">Coach tip</span> — {coachTip}</p>}
+                <Link href="/dashboard/profile" className="inline-block text-[12px] font-bold text-brand mt-3">
+                  {coachTip ? "Open your AI profile coach →" : "Complete your profile →"}
+                </Link>
+              </>
+            ) : coachTip ? (
+              <>
+                <p className="text-[12.5px] text-green-700 font-semibold mt-3">✓ Complete — now make it stronger.</p>
+                <p className="text-[12.5px] text-ink-2 mt-2 leading-relaxed">✨ <span className="font-bold">Coach tip</span> — {coachTip}</p>
+                <Link href="/dashboard/profile" className="inline-block text-[12px] font-bold text-brand mt-3">Open your AI profile coach →</Link>
               </>
             ) : (
               <p className="text-[12.5px] text-green-700 font-semibold mt-3">✓ Complete — you're putting your best foot forward.</p>
@@ -194,15 +210,15 @@ export default function Home() {
             </div>
           </section>
 
-          {/* AI teaser */}
+          {/* AI tools */}
           <section className={`${card} rise-3`} aria-label="AI career tools">
             <div className="flex items-center gap-2.5">
               <span aria-hidden className="text-[18px]">🤖</span>
               <h2 className="text-[15px] font-extrabold">AI career tools</h2>
-              <span className="ml-auto px-2 py-0.5 rounded-full bg-sunken text-[10.5px] font-bold text-ink-2">SOON</span>
+              <span className="ml-auto px-2 py-0.5 rounded-full bg-green-50 text-[10.5px] font-bold text-green-700">LIVE</span>
             </div>
-            <p className="text-[13px] text-ink-2 mt-2">Resume review, tailored cover letters, interview practice and more are on the way.</p>
-            <Link href="/dashboard/ai" className="inline-block mt-2.5 text-[13px] font-bold text-brand">Preview the tools →</Link>
+            <p className="text-[13px] text-ink-2 mt-2">Resume optimizer, ATS score, interview coach, salary estimator and more — free with your account.</p>
+            <Link href="/dashboard/ai" className="inline-block mt-2.5 text-[13px] font-bold text-brand">Open the tools →</Link>
           </section>
         </div>
       </div>
