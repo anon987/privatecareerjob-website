@@ -31,11 +31,16 @@ export function Chip({ children, tone = "neutral" }: { children: React.ReactNode
   return <span className={`px-2.5 py-1 rounded-full text-[11.5px] font-bold ${cls}`}>{children}</span>;
 }
 
-/** Skill-overlap match badge — only rendered when a real score exists. */
-export function MatchBadge({ score }: { score: number | null }) {
+/** Match badge — only rendered when a real score exists. AI-scored badges
+ *  (reason present) get a sparkle and show the reason on hover. */
+export function MatchBadge({ score, reason }: { score: number | null; reason?: string }) {
   if (score == null) return null;
   const tone = score >= 85 ? "bg-green-50 text-green-700" : score >= 70 ? "bg-brand-tonal text-brand" : "bg-sunken text-ink-2";
-  return <span className={`px-2.5 py-1 rounded-full text-[11.5px] font-extrabold ${tone}`}>{score}% match</span>;
+  return (
+    <span title={reason} className={`px-2.5 py-1 rounded-full text-[11.5px] font-extrabold ${tone}`}>
+      {reason ? "✨ " : ""}{score}% match
+    </span>
+  );
 }
 
 export function StatCard({ icon, value, label, hint }: { icon: string; value: string | number; label: string; hint?: string }) {
@@ -106,6 +111,7 @@ export function JobCard({
   onToggleSave,
   applied,
   score,
+  scoreReason,
   onHide,
 }: {
   job: JobDoc;
@@ -113,6 +119,8 @@ export function JobCard({
   onToggleSave: () => void;
   applied?: boolean;
   score?: number | null;
+  /** present when the score came from the AI matcher — shown on hover */
+  scoreReason?: string;
   onHide?: () => void;
 }) {
   const [copied, setCopied] = useState(false);
@@ -134,7 +142,7 @@ export function JobCard({
       <div className="flex items-start justify-between gap-3">
         <CompanyBadge name={job.companyName || "Company"} initials={companyInitials(job.companyName)} />
         <div className="flex items-center gap-1.5 shrink-0">
-          <MatchBadge score={score ?? null} />
+          <MatchBadge score={score ?? null} reason={scoreReason} />
           <button
             onClick={onToggleSave}
             aria-label={saved ? "Unsave job" : "Save job"}

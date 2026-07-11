@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useDash } from "./Shell";
 import { Empty, JobCard, Skeletons } from "./bits";
+import { useJobScores } from "./ai/useJobScores";
 import { isRemote, matchScore, toggleSaveJob, useLiveJobs, useMyApplications, useSavedJobs } from "@/lib/seeker";
 
 const HIDE_KEY = "psj-hidden-jobs";
@@ -13,6 +14,7 @@ export default function JobsFeed() {
   const { jobs, loading } = useLiveJobs();
   const { apps } = useMyApplications(user.uid);
   const { ids: savedIds } = useSavedJobs(user.uid);
+  const aiScores = useJobScores(user.uid, profile, jobs);
   const [q, setQ] = useState("");
   const [remoteOnly, setRemoteOnly] = useState(false);
   const [category, setCategory] = useState("");
@@ -112,7 +114,8 @@ export default function JobsFeed() {
             <JobCard
               key={j.id}
               job={j}
-              score={matchScore(profile.skills, j)}
+              score={aiScores[j.id]?.score ?? matchScore(profile.skills, j)}
+              scoreReason={aiScores[j.id]?.reason}
               saved={!!savedIds[j.id]}
               onToggleSave={() => toggleSaveJob(user.uid, j, !!savedIds[j.id]).catch(() => {})}
               onHide={() => hide(j.id)}
