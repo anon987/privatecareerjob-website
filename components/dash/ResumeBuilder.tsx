@@ -597,12 +597,8 @@ function ScaledPreview({ children, max = 460 }: { children: React.ReactNode; max
 const btn = "inline-flex items-center justify-center min-h-11 px-5 rounded-2xl font-bold text-[14px] transition cursor-pointer press";
 const cardCls = "bg-white border border-line rounded-3xl p-5 shadow-[0_2px_14px_rgba(17,24,39,0.04)]";
 const inputCls = "w-full min-h-11 px-3.5 rounded-[14px] border border-line bg-paper outline-none focus:border-brand focus:ring-[3px] focus:ring-brand/15 transition";
-const TEXT_SIZES: { label: string; v: number }[] = [
-  { label: "S", v: 0.92 },
-  { label: "M", v: 1 },
-  { label: "L", v: 1.08 },
-  { label: "XL", v: 1.16 },
-];
+const FONT_SCALE_MIN = 0.7;
+const FONT_SCALE_MAX = 1.2;
 
 type DetailKey = "name" | "headline" | "phone" | "location" | "summary";
 
@@ -627,6 +623,7 @@ interface EditorProps {
   onBack: () => void;
   onPickSibling: (t: TemplateSpec) => void;
   onDownload: () => void;
+  downloading: boolean;
   onSave: () => void;
   busy: boolean;
   note: string;
@@ -636,7 +633,7 @@ interface EditorProps {
 type ToolId = "templates" | "color" | "font" | "photo" | "edit";
 
 function ResumeEditor(props: EditorProps) {
-  const { spec, display, bare, counts, accent, onAccent, showPhoto, onPhoto, photoAvailable, fontId, onFont, fam, fontScale, onFontScale, details, onDetail, onBack, onPickSibling, onDownload, onSave, busy, note, printRef } = props;
+  const { spec, display, bare, counts, accent, onAccent, showPhoto, onPhoto, photoAvailable, fontId, onFont, fam, fontScale, onFontScale, details, onDetail, onBack, onPickSibling, onDownload, downloading, onSave, busy, note, printRef } = props;
   const [tool, setTool] = useState<ToolId | null>(null); // null = no mobile sheet open
   const [family, setFamily] = useState<Kind>(spec.kind); // which family the Templates panel browses
 
@@ -696,15 +693,30 @@ function ResumeEditor(props: EditorProps) {
           <option key={f.id} value={f.id}>{f.id === "system" ? "Default (Manrope)" : f.family}{f.serif ? " (serif)" : ""}</option>
         ))}
       </select>
-      <p className="text-[12.5px] font-semibold text-ink-2 mt-4 mb-2">Text size</p>
-      <div className="grid grid-cols-4 gap-1.5">
-        {TEXT_SIZES.map((o) => (
-          <button key={o.label} onClick={() => onFontScale(o.v)} className={`min-h-9 rounded-[10px] text-[12.5px] font-bold transition ${Math.abs(fontScale - o.v) < 0.001 ? "bg-brand text-white" : "bg-sunken text-ink-2 hover:text-ink"}`}>
-            {o.label}
-          </button>
-        ))}
+      <div className="flex items-baseline justify-between mt-4 mb-2">
+        <p className="text-[12.5px] font-semibold text-ink-2">Text size</p>
+        <span className="text-[12px] font-extrabold text-brand tabular-nums">{Math.round(fontScale * 100)}%</span>
       </div>
-      <p className="text-[11.5px] text-ink-3 mt-2">Larger text may push the resume past one page.</p>
+      <div className="flex items-center gap-2.5">
+        <span aria-hidden className="text-[10px] font-bold text-ink-3">A</span>
+        <input
+          type="range"
+          min={FONT_SCALE_MIN}
+          max={FONT_SCALE_MAX}
+          step={0.01}
+          value={fontScale}
+          onChange={(e) => onFontScale(Number(e.target.value))}
+          aria-label="Text size"
+          className="flex-1 accent-brand cursor-pointer"
+        />
+        <span aria-hidden className="text-[16px] font-bold text-ink-3">A</span>
+      </div>
+      <div className="flex items-center justify-between mt-2">
+        <p className="text-[11.5px] text-ink-3">Drag to scale — the preview updates live.</p>
+        {Math.abs(fontScale - 1) > 0.001 && (
+          <button onClick={() => onFontScale(1)} className="text-[11.5px] font-extrabold text-brand cursor-pointer shrink-0">Reset</button>
+        )}
+      </div>
     </div>
   );
 
@@ -767,7 +779,9 @@ function ResumeEditor(props: EditorProps) {
           <h1 className="text-[18px] font-extrabold leading-tight">{spec.name}</h1>
           <p className="text-[12px] text-ink-3">{spec.kind === "text" ? "Text · ATS-friendly" : "Visual theme"}</p>
         </div>
-        <button onClick={onDownload} className={`${btn} border border-line hover:bg-sunken`}>Download PDF</button>
+        <button onClick={onDownload} disabled={downloading} className={`${btn} border border-line hover:bg-sunken disabled:opacity-60`}>
+          {downloading ? "Preparing PDF…" : "Download PDF"}
+        </button>
         <button onClick={onSave} disabled={busy} className={`${btn} bg-accent hover:bg-accent-pressed text-ink disabled:opacity-50`}>{busy ? "Saving…" : "Save"}</button>
       </div>
 
@@ -931,9 +945,8 @@ export default function ResumeBuilder() {
     }
   };
 
-  const download = () => {
-    const node = printRef.current;
-    if (!node) return;
+  // Last-resort path when the PDF service is unreachable: print dialog.
+  const printFallback = (node: HTMLDivElement) => {
     const link = fam ? `<link href="https://fonts.googleapis.com/css2?family=${fam.replace(/ /g, "+")}:wght@400;600;700&display=swap" rel="stylesheet">` : "";
     const w = window.open("", "_blank", "width=880,height=1200");
     if (!w) {
@@ -949,6 +962,38 @@ export default function ResumeBuilder() {
         `<script>window.onload=function(){setTimeout(function(){window.focus();window.print();},500);};<\/script></body></html>`
     );
     w.document.close();
+    setNote("Choose “Save as PDF” in the dialog.");
+  };
+
+  const [downloading, setDownloading] = useState(false);
+  const download = async () => {
+    const node = printRef.current;
+    if (!node || downloading) return;
+    setDownloading(true);
+    setNote("");
+    try {
+      const token = await user.getIdToken();
+      const res = await fetch("/api/resume-pdf", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ html: node.innerHTML, font: fam ?? "", title: name || "Resume" }),
+      });
+      if (!res.ok) throw new Error(`pdf ${res.status}`);
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${(name || "Resume").replace(/[^\w\s.-]/g, "").trim() || "Resume"} - Resume.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 4000);
+      setNote("PDF downloaded ✓");
+    } catch {
+      printFallback(node);
+    } finally {
+      setDownloading(false);
+    }
   };
 
   /* ------------ gallery ------------ */
@@ -1016,6 +1061,7 @@ export default function ResumeBuilder() {
       onBack={() => setSpec(null)}
       onPickSibling={(t) => { setSpec(t); setAccent(t.accent); }}
       onDownload={download}
+      downloading={downloading}
       onSave={save}
       busy={busy}
       note={note}
