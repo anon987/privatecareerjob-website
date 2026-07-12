@@ -9,6 +9,7 @@ import { SITE_ORIGIN } from "@/lib/site";
 export default function sitemap(): MetadataRoute.Sitemap {
   return [
     { url: SITE_ORIGIN, changeFrequency: "weekly", priority: 1 },
+    { url: `${SITE_ORIGIN}/resume-maker`, changeFrequency: "monthly", priority: 0.9 },
     { url: `${SITE_ORIGIN}/signup`, changeFrequency: "monthly", priority: 0.8 },
   ];
 }

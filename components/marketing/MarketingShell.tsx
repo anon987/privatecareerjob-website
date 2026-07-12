@@ -10,6 +10,7 @@ import { ArrowRight, Mail, Menu, MessageCircle, UsersRound, X } from "lucide-rea
 const navItems = [
   { href: "/job-seekers", label: "Job Seekers" },
   { href: "/recruiters", label: "Recruiters" },
+  { href: "/resume-maker", label: "Resume Maker" },
   { href: "/ai-tools", label: "AI Tools" },
   { href: "/resources", label: "Resources" },
   { href: "/about", label: "About" },
@@ -165,8 +166,8 @@ export function MarketingShell({ children }: { children: React.ReactNode }) {
           </div>
           {[
             ["Company", [["About", "/about"], ["Contact", "/contact"], ["Create account", "/signup"]]],
-            ["Product", [["Job seekers", "/job-seekers"], ["Recruiters", "/recruiters"], ["AI tools", "/ai-tools"]]],
-            ["Resources", [["Guides", "/resources"], ["Resume builder", "/job-seekers"], ["Hiring pipeline", "/recruiters"]]],
+            ["Product", [["Job seekers", "/job-seekers"], ["Recruiters", "/recruiters"], ["Resume maker", "/resume-maker"], ["AI tools", "/ai-tools"]]],
+            ["Resources", [["Guides", "/resources"], ["Resume maker", "/resume-maker"], ["Hiring pipeline", "/recruiters"]]],
             ["Support", [["Help center", "/resources"], ["Privacy", "/privacy"], ["Terms", "/terms"]]],
           ].map(([heading, links]) => (
             <div key={heading as string}>
