@@ -2,7 +2,7 @@
 
 import { GoogleAuthProvider, signInWithPopup, signOut, type User } from "firebase/auth";
 import { deleteDoc, doc, getDoc, serverTimestamp, setDoc, updateDoc } from "firebase/firestore";
-import { deleteObject, getDownloadURL, ref, uploadBytes } from "firebase/storage";
+import { deleteObject, getDownloadURL, ref, uploadBytes, uploadBytesResumable, type StorageError } from "firebase/storage";
 import { auth, db, storage } from "./firebaseClient";
 import type { PublicSite, SiteDesign } from "./site";
 import { LEGACY_TEMPLATE_OF, WEB_FONTS } from "./themes";
@@ -114,28 +114,62 @@ export type ResumeEntry = NonNullable<AppProfile["resumes"]>[number];
 export const MAX_RESUMES = 5;
 export const MAX_RESUME_BYTES = 3 * 1024 * 1024; // keep base64 under the request limit
 
-/** Upload a resume PDF and append it to users/{uid}.resumes. First upload becomes default. */
-export async function uploadResumeFile(uid: string, file: File, existing: ResumeEntry[]): Promise<ResumeEntry> {
+function storageErrorMessage(e: unknown): string {
+  const code = (e as StorageError)?.code ?? "";
+  if (code.includes("unauthorized") || code.includes("unauthenticated")) {
+    return "Upload blocked by storage permissions — the resumes folder needs to be allowed in Firebase Storage rules.";
+  }
+  if (code.includes("canceled")) return "Upload cancelled.";
+  if (code.includes("retry-limit-exceeded") || code.includes("quota")) return "Network trouble during upload — please try again.";
+  return e instanceof Error ? e.message : "Upload failed — please try again.";
+}
+
+export interface ResumeUploadHandle {
+  promise: Promise<ResumeEntry>;
+  cancel: () => void;
+}
+
+/** Resumable resume-PDF upload with progress; appends to users/{uid}.resumes
+ *  on completion. First upload becomes default. Errors reject immediately
+ *  with a human message instead of silently retrying forever. */
+export function startResumeUpload(uid: string, file: File, existing: ResumeEntry[], onProgress?: (pct: number) => void): ResumeUploadHandle {
   if (existing.length >= MAX_RESUMES) throw new Error(`You can keep up to ${MAX_RESUMES} resumes — remove one first.`);
   if (file.type !== "application/pdf" && !/\.pdf$/i.test(file.name)) throw new Error("Please upload a PDF file.");
   if (file.size > MAX_RESUME_BYTES) throw new Error("Keep the PDF under 3 MB.");
 
   const id = `r${Date.now()}`;
   const filename = file.name.replace(/[^\w\s.()-]/g, "").slice(0, 80) || "resume.pdf";
-  const fileRef = ref(storage, `resumes/${uid}/${id}.pdf`);
-  await uploadBytes(fileRef, file, { contentType: "application/pdf" });
-  const url = await getDownloadURL(fileRef);
-  const next: ResumeEntry = { id, filename, url, isDefault: existing.length === 0 };
-  await updateMyProfile(uid, { resumes: [...existing, next] });
-  return next;
+  const task = uploadBytesResumable(ref(storage, `resumes/${uid}/${id}.pdf`), file, { contentType: "application/pdf" });
+
+  const promise = new Promise<ResumeEntry>((resolve, reject) => {
+    task.on(
+      "state_changed",
+      (snap) => onProgress?.(snap.totalBytes ? Math.round((snap.bytesTransferred / snap.totalBytes) * 100) : 0),
+      (err) => reject(new Error(storageErrorMessage(err))),
+      async () => {
+        try {
+          const url = await getDownloadURL(task.snapshot.ref);
+          const next: ResumeEntry = { id, filename, url, isDefault: existing.length === 0 };
+          await updateMyProfile(uid, { resumes: [...existing, next] });
+          resolve(next);
+        } catch (e) {
+          reject(new Error(storageErrorMessage(e)));
+        }
+      }
+    );
+  });
+
+  return { promise, cancel: () => task.cancel() };
 }
 
-/** Remove a resume entry (storage delete is best-effort; default falls to the first left). */
-export async function removeResumeFile(uid: string, id: string, existing: ResumeEntry[]): Promise<void> {
-  const rest = existing.filter((r) => r.id !== id);
+/** Remove a resume entry (storage delete is best-effort; default falls to the first left).
+ *  Entries created by the mobile app may have no id — match by filename+url then. */
+export async function removeResumeFile(uid: string, entry: ResumeEntry, existing: ResumeEntry[]): Promise<void> {
+  const same = (r: ResumeEntry) => (entry.id ? r.id === entry.id : r.filename === entry.filename && r.url === entry.url);
+  const rest = existing.filter((r) => !same(r));
   if (rest.length && !rest.some((r) => r.isDefault)) rest[0] = { ...rest[0], isDefault: true };
   await updateMyProfile(uid, { resumes: rest });
-  await deleteObject(ref(storage, `resumes/${uid}/${id}.pdf`)).catch(() => {});
+  if (entry.id) await deleteObject(ref(storage, `resumes/${uid}/${entry.id}.pdf`)).catch(() => {});
 }
 
 export async function setDefaultResume(uid: string, id: string, existing: ResumeEntry[]): Promise<void> {

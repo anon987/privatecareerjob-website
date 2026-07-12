@@ -6,7 +6,7 @@ import { useDash } from "./Shell";
 import { card } from "./bits";
 import ProfileAssistant from "./ai/ProfileAssistant";
 import {
-  MAX_RESUMES, removeProfilePhoto, removeResumeFile, setDefaultResume, updateMyProfile, uploadProfilePhoto, uploadResumeFile,
+  MAX_RESUMES, removeProfilePhoto, removeResumeFile, setDefaultResume, startResumeUpload, updateMyProfile, uploadProfilePhoto,
   type ResumeEntry,
 } from "@/lib/account";
 import { callAiTool } from "@/lib/ai/client";
@@ -186,36 +186,43 @@ export default function Profile() {
 
   const resumes: ResumeEntry[] = profile.resumes ?? [];
   const [resumeBusy, setResumeBusy] = useState(false);
+  const [uploadPct, setUploadPct] = useState<number | null>(null);
+  const [dragOver, setDragOver] = useState(false);
   const [resumeError, setResumeError] = useState("");
   const [fillBusyId, setFillBusyId] = useState<string | null>(null);
   const [justUploadedId, setJustUploadedId] = useState<string | null>(null);
   const resumeInputRef = useRef<HTMLInputElement>(null);
+  const cancelUploadRef = useRef<(() => void) | null>(null);
 
   const addResume = async (file: File | undefined) => {
-    if (!file) return;
-    setResumeBusy(true);
+    if (!file || uploadPct !== null) return;
     setResumeError("");
     try {
-      const entry = await uploadResumeFile(user.uid, file, resumes);
+      const handle = startResumeUpload(user.uid, file, resumes, setUploadPct);
+      cancelUploadRef.current = handle.cancel;
+      setUploadPct(0);
+      const entry = await handle.promise;
       await refresh().catch(() => {});
       setJustUploadedId(entry.id ?? null);
     } catch (e) {
-      setResumeError(e instanceof Error ? e.message : "Could not upload — please try again.");
+      const message = e instanceof Error ? e.message : "Could not upload — please try again.";
+      if (message !== "Upload cancelled.") setResumeError(message);
     } finally {
-      setResumeBusy(false);
+      setUploadPct(null);
+      cancelUploadRef.current = null;
       if (resumeInputRef.current) resumeInputRef.current.value = "";
     }
   };
 
-  const deleteResume = async (id: string) => {
+  const deleteResume = async (entry: ResumeEntry) => {
     setResumeBusy(true);
     setResumeError("");
     try {
-      await removeResumeFile(user.uid, id, resumes);
+      await removeResumeFile(user.uid, entry, resumes);
       await refresh().catch(() => {});
-      if (justUploadedId === id) setJustUploadedId(null);
+      if (justUploadedId === entry.id) setJustUploadedId(null);
     } catch (e) {
-      setResumeError(e instanceof Error ? e.message : "Could not remove — please try again.");
+      setResumeError(e instanceof Error ? e.message : "Could not delete — please try again.");
     } finally {
       setResumeBusy(false);
     }
@@ -494,21 +501,51 @@ export default function Profile() {
 
       {/* uploaded resume files — saved instantly, independent of the Save bar */}
       <section className={card} aria-label="Resumes">
-        <div className="flex items-center justify-between gap-3">
-          <h2 className="text-[16px] font-bold">Resumes</h2>
-          <input ref={resumeInputRef} type="file" accept=".pdf,application/pdf" className="hidden" onChange={(e) => addResume(e.target.files?.[0])} />
-          <button
-            type="button"
-            onClick={() => resumeInputRef.current?.click()}
-            disabled={resumeBusy || resumes.length >= MAX_RESUMES}
-            className="text-[13px] font-bold text-brand hover:text-brand-pressed cursor-pointer disabled:opacity-50"
-          >
-            {resumeBusy ? "Uploading…" : "+ Upload PDF"}
-          </button>
-        </div>
+        <h2 className="text-[16px] font-bold">Resumes</h2>
         <p className="text-[12.5px] text-ink-3 mt-1">
           Keep up to {MAX_RESUMES} versions (PDF, max 3 MB). Your default resume is attached when you apply — and any of them can fill this profile for you.
         </p>
+
+        <input ref={resumeInputRef} type="file" accept=".pdf,application/pdf" className="hidden" onChange={(e) => addResume(e.target.files?.[0])} />
+        {uploadPct === null ? (
+          <div
+            onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+            onDragLeave={() => setDragOver(false)}
+            onDrop={(e) => { e.preventDefault(); setDragOver(false); addResume(e.dataTransfer.files?.[0]); }}
+            className={`mt-3 rounded-2xl border-2 border-dashed px-4 py-6 text-center transition ${
+              dragOver ? "border-brand bg-brand-tonal" : "border-line bg-paper"
+            } ${resumes.length >= MAX_RESUMES ? "opacity-50" : ""}`}
+          >
+            <p className="text-[20px]" aria-hidden>📄</p>
+            <p className="text-[13.5px] font-bold mt-1">
+              {dragOver ? "Drop to upload" : "Drag & drop your resume PDF here"}
+            </p>
+            <p className="text-[12.5px] text-ink-3 mt-0.5">
+              or{" "}
+              <button
+                type="button"
+                onClick={() => resumeInputRef.current?.click()}
+                disabled={resumes.length >= MAX_RESUMES}
+                className="font-extrabold text-brand cursor-pointer disabled:cursor-not-allowed"
+              >
+                browse files
+              </button>
+              {resumes.length >= MAX_RESUMES ? ` — you've reached the ${MAX_RESUMES}-resume limit` : ""}
+            </p>
+          </div>
+        ) : (
+          <div className="mt-3 rounded-2xl border border-line bg-paper px-4 py-4">
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-[13px] font-bold">Uploading… {uploadPct}%</p>
+              <button type="button" onClick={() => cancelUploadRef.current?.()} className="text-[12.5px] font-extrabold text-red-500 cursor-pointer">
+                Cancel
+              </button>
+            </div>
+            <div className="mt-2 h-2 rounded-full bg-sunken overflow-hidden">
+              <div className="h-full rounded-full bg-brand transition-all duration-200" style={{ width: `${uploadPct}%` }} />
+            </div>
+          </div>
+        )}
         {resumeError && <p className="text-[12.5px] font-semibold text-red-600 mt-2">{resumeError}</p>}
         {resumes.length === 0 ? (
           <p className="text-[13.5px] text-ink-2 mt-3">No resumes uploaded yet.</p>
@@ -535,11 +572,9 @@ export default function Profile() {
                     >
                       {fillBusyId === r.id ? "Reading…" : "✨ Fill profile"}
                     </button>
-                    {r.id && (
-                      <button type="button" onClick={() => deleteResume(r.id!)} disabled={resumeBusy} className="text-ink-3 hover:text-red-500 cursor-pointer transition disabled:opacity-50">
-                        Remove
-                      </button>
-                    )}
+                    <button type="button" onClick={() => deleteResume(r)} disabled={resumeBusy} className="text-ink-3 hover:text-red-500 cursor-pointer transition disabled:opacity-50">
+                      {resumeBusy ? "…" : "Delete"}
+                    </button>
                   </div>
                 </div>
                 {justUploadedId === r.id && fillBusyId === null && (
