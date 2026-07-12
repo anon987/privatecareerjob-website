@@ -5,7 +5,12 @@ import Link from "next/link";
 import { useDash } from "./Shell";
 import { card } from "./bits";
 import ProfileAssistant from "./ai/ProfileAssistant";
-import { removeProfilePhoto, updateMyProfile, uploadProfilePhoto } from "@/lib/account";
+import {
+  MAX_RESUMES, removeProfilePhoto, removeResumeFile, setDefaultResume, updateMyProfile, uploadProfilePhoto, uploadResumeFile,
+  type ResumeEntry,
+} from "@/lib/account";
+import { callAiTool } from "@/lib/ai/client";
+import type { ExtractedProfile } from "@/app/api/ai/resume-extract/route";
 
 /**
  * Job-seeker Profile editor — writes the same users/{uid} fields the app reads
@@ -174,6 +179,94 @@ export default function Profile() {
       setPhotoError(e instanceof Error ? e.message : "Could not remove the photo — please try again.");
     } finally {
       setPhotoBusy(false);
+    }
+  };
+
+  /* ---- resume files + AI fill ---- */
+
+  const resumes: ResumeEntry[] = profile.resumes ?? [];
+  const [resumeBusy, setResumeBusy] = useState(false);
+  const [resumeError, setResumeError] = useState("");
+  const [fillBusyId, setFillBusyId] = useState<string | null>(null);
+  const [justUploadedId, setJustUploadedId] = useState<string | null>(null);
+  const resumeInputRef = useRef<HTMLInputElement>(null);
+
+  const addResume = async (file: File | undefined) => {
+    if (!file) return;
+    setResumeBusy(true);
+    setResumeError("");
+    try {
+      const entry = await uploadResumeFile(user.uid, file, resumes);
+      await refresh().catch(() => {});
+      setJustUploadedId(entry.id ?? null);
+    } catch (e) {
+      setResumeError(e instanceof Error ? e.message : "Could not upload — please try again.");
+    } finally {
+      setResumeBusy(false);
+      if (resumeInputRef.current) resumeInputRef.current.value = "";
+    }
+  };
+
+  const deleteResume = async (id: string) => {
+    setResumeBusy(true);
+    setResumeError("");
+    try {
+      await removeResumeFile(user.uid, id, resumes);
+      await refresh().catch(() => {});
+      if (justUploadedId === id) setJustUploadedId(null);
+    } catch (e) {
+      setResumeError(e instanceof Error ? e.message : "Could not remove — please try again.");
+    } finally {
+      setResumeBusy(false);
+    }
+  };
+
+  const makeDefault = async (id: string) => {
+    try {
+      await setDefaultResume(user.uid, id, resumes);
+      await refresh().catch(() => {});
+    } catch {
+      setResumeError("Could not update the default resume.");
+    }
+  };
+
+  /** Overwrite form fields with whatever the resume actually contains. */
+  const applyExtracted = (x: ExtractedProfile) => {
+    const clean = (arr: string[] | undefined) => Array.from(new Set((arr ?? []).map((s) => s.trim()).filter(Boolean)));
+    if (x.fullName?.trim()) setFullName(x.fullName.trim());
+    if (x.headline?.trim()) setHeadline(x.headline.trim());
+    if (x.summary?.trim()) setSummary(x.summary.trim());
+    if (x.location?.trim()) setLocation(x.location.trim());
+    if (x.phone?.trim()) setPhone(x.phone.trim());
+    if (clean(x.skills).length) setSkills(clean(x.skills));
+    if (clean(x.languages).length) setLanguages(clean(x.languages));
+    if (x.experience?.length) setExperience(x.experience.map((e) => ({ role: e.role ?? "", company: e.company ?? "", period: e.period ?? "", description: e.description ?? "" })));
+    if (x.education?.length) setEducation(x.education.map((e) => ({ degree: e.degree ?? "", school: e.school ?? "", year: e.year ?? "" })));
+    if (x.certificates?.length) setCertificates(x.certificates.map((c) => ({ name: c.name ?? "", issuer: c.issuer ?? "", year: c.year ?? "" })));
+    if (x.projects?.length) setProjects(x.projects.map((p) => ({ title: p.title ?? "", description: p.description ?? "" })));
+  };
+
+  const fillFromResume = async (entry: ResumeEntry) => {
+    if (!entry.url || fillBusyId) return;
+    setFillBusyId(entry.id ?? "x");
+    setResumeError("");
+    try {
+      const blob = await (await fetch(entry.url)).blob();
+      const pdfBase64 = await new Promise<string>((resolve, reject) => {
+        const r = new FileReader();
+        r.onload = () => resolve(String(r.result).replace(/^data:.*?;base64,/, ""));
+        r.onerror = () => reject(new Error("Could not read the file."));
+        r.readAsDataURL(blob);
+      });
+      const extracted = await callAiTool<ExtractedProfile>("resume-extract", { pdfBase64 });
+      applyExtracted(extracted);
+      setJustUploadedId(null);
+      setNote("Profile filled from your resume — review the sections below, then Save.");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } catch (e) {
+      setResumeError(e instanceof Error ? e.message : "Could not read that resume — try another PDF.");
+    } finally {
+      setFillBusyId(null);
     }
   };
 
@@ -398,6 +491,71 @@ export default function Profile() {
           { key: "year", placeholder: "Year", full: true },
         ]}
       />
+
+      {/* uploaded resume files — saved instantly, independent of the Save bar */}
+      <section className={card} aria-label="Resumes">
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-[16px] font-bold">Resumes</h2>
+          <input ref={resumeInputRef} type="file" accept=".pdf,application/pdf" className="hidden" onChange={(e) => addResume(e.target.files?.[0])} />
+          <button
+            type="button"
+            onClick={() => resumeInputRef.current?.click()}
+            disabled={resumeBusy || resumes.length >= MAX_RESUMES}
+            className="text-[13px] font-bold text-brand hover:text-brand-pressed cursor-pointer disabled:opacity-50"
+          >
+            {resumeBusy ? "Uploading…" : "+ Upload PDF"}
+          </button>
+        </div>
+        <p className="text-[12.5px] text-ink-3 mt-1">
+          Keep up to {MAX_RESUMES} versions (PDF, max 3 MB). Your default resume is attached when you apply — and any of them can fill this profile for you.
+        </p>
+        {resumeError && <p className="text-[12.5px] font-semibold text-red-600 mt-2">{resumeError}</p>}
+        {resumes.length === 0 ? (
+          <p className="text-[13.5px] text-ink-2 mt-3">No resumes uploaded yet.</p>
+        ) : (
+          <div className="mt-3 space-y-2">
+            {resumes.map((r) => (
+              <div key={r.id ?? r.filename} className="rounded-2xl border border-line p-3.5">
+                <div className="flex items-center gap-3 flex-wrap">
+                  <span aria-hidden className="grid place-items-center w-9 h-9 rounded-xl bg-brand-tonal text-[15px] shrink-0">📄</span>
+                  <div className="flex-1 min-w-[160px]">
+                    <p className="text-[13.5px] font-bold truncate">{r.filename}</p>
+                    {r.isDefault && <span className="text-[11px] font-extrabold text-green-700">✓ Default — used when applying</span>}
+                  </div>
+                  <div className="flex items-center gap-3 text-[12.5px] font-bold shrink-0">
+                    {r.url && <a href={r.url} target="_blank" rel="noreferrer" className="text-ink-2 hover:text-ink">View</a>}
+                    {!r.isDefault && r.id && (
+                      <button type="button" onClick={() => makeDefault(r.id!)} className="text-ink-2 hover:text-brand cursor-pointer">Make default</button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => fillFromResume(r)}
+                      disabled={fillBusyId !== null}
+                      className="text-brand cursor-pointer disabled:opacity-50"
+                    >
+                      {fillBusyId === r.id ? "Reading…" : "✨ Fill profile"}
+                    </button>
+                    {r.id && (
+                      <button type="button" onClick={() => deleteResume(r.id!)} disabled={resumeBusy} className="text-ink-3 hover:text-red-500 cursor-pointer transition disabled:opacity-50">
+                        Remove
+                      </button>
+                    )}
+                  </div>
+                </div>
+                {justUploadedId === r.id && fillBusyId === null && (
+                  <div className="mt-3 flex items-center gap-3 flex-wrap rounded-xl bg-brand-tonal px-3.5 py-2.5">
+                    <p className="text-[13px] font-semibold text-brand flex-1 min-w-[180px]">Fill your profile from this resume? AI reads it and completes the sections for you.</p>
+                    <button type="button" onClick={() => fillFromResume(r)} className="min-h-9 px-4 rounded-xl bg-brand text-white text-[12.5px] font-extrabold cursor-pointer press">
+                      ✨ Fill profile
+                    </button>
+                    <button type="button" onClick={() => setJustUploadedId(null)} className="text-[12.5px] font-bold text-ink-2 cursor-pointer">Not now</button>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
 
       <p className="text-[12.5px] text-ink-3">
         Your profile feeds your <Link href="/dashboard/resume" className="font-bold text-brand">Resume builder</Link> and your public page. After editing, publish or republish from{" "}

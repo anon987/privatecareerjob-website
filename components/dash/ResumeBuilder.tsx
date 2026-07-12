@@ -947,7 +947,8 @@ export default function ResumeBuilder() {
   const [accent, setAccent] = useState<string>(profile.resumeAccent ?? savedSpec?.accent ?? COLORS[1].hex);
   const [showPhoto, setShowPhoto] = useState<boolean>(profile.resumePhotoOn ?? true);
   const [fontId, setFontId] = useState<string>(profile.resumeFont ?? "system");
-  const [fontScale, setFontScale] = useState<number>(profile.resumeFontScale ?? 1);
+  // 80% default reads better on the one-page A4 budget; saved prefs win.
+  const [fontScale, setFontScale] = useState<number>(profile.resumeFontScale ?? 0.8);
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState("");
 

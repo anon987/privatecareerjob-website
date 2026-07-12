@@ -107,6 +107,41 @@ export async function removeProfilePhoto(uid: string): Promise<void> {
   await deleteObject(ref(storage, `profilePhotos/${uid}.jpg`)).catch(() => {});
 }
 
+/* ---- resume files ---- */
+
+export type ResumeEntry = NonNullable<AppProfile["resumes"]>[number];
+
+export const MAX_RESUMES = 5;
+export const MAX_RESUME_BYTES = 3 * 1024 * 1024; // keep base64 under the request limit
+
+/** Upload a resume PDF and append it to users/{uid}.resumes. First upload becomes default. */
+export async function uploadResumeFile(uid: string, file: File, existing: ResumeEntry[]): Promise<ResumeEntry> {
+  if (existing.length >= MAX_RESUMES) throw new Error(`You can keep up to ${MAX_RESUMES} resumes — remove one first.`);
+  if (file.type !== "application/pdf" && !/\.pdf$/i.test(file.name)) throw new Error("Please upload a PDF file.");
+  if (file.size > MAX_RESUME_BYTES) throw new Error("Keep the PDF under 3 MB.");
+
+  const id = `r${Date.now()}`;
+  const filename = file.name.replace(/[^\w\s.()-]/g, "").slice(0, 80) || "resume.pdf";
+  const fileRef = ref(storage, `resumes/${uid}/${id}.pdf`);
+  await uploadBytes(fileRef, file, { contentType: "application/pdf" });
+  const url = await getDownloadURL(fileRef);
+  const next: ResumeEntry = { id, filename, url, isDefault: existing.length === 0 };
+  await updateMyProfile(uid, { resumes: [...existing, next] });
+  return next;
+}
+
+/** Remove a resume entry (storage delete is best-effort; default falls to the first left). */
+export async function removeResumeFile(uid: string, id: string, existing: ResumeEntry[]): Promise<void> {
+  const rest = existing.filter((r) => r.id !== id);
+  if (rest.length && !rest.some((r) => r.isDefault)) rest[0] = { ...rest[0], isDefault: true };
+  await updateMyProfile(uid, { resumes: rest });
+  await deleteObject(ref(storage, `resumes/${uid}/${id}.pdf`)).catch(() => {});
+}
+
+export async function setDefaultResume(uid: string, id: string, existing: ResumeEntry[]): Promise<void> {
+  await updateMyProfile(uid, { resumes: existing.map((r) => ({ ...r, isDefault: r.id === id })) });
+}
+
 /** Load my app profile; creates a starter seeker account (+ role registry entry,
  *  same one-role-per-email invariant as the app) for brand-new Google users. */
 export async function ensureAccount(user: User): Promise<AppProfile> {

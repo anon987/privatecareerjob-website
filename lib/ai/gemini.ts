@@ -47,16 +47,21 @@ export function gemini(): GoogleGenAI {
   return client;
 }
 
-/** One structured-output call: system + prompt in, schema-validated JSON out. */
+/** One structured-output call: system + prompt (optionally with an inline
+ *  document, e.g. a PDF) in, schema-validated JSON out. */
 export async function generateJSON<T>(opts: {
   system: string;
   prompt: string;
   schema: Schema;
   temperature?: number;
+  /** base64-encoded document sent alongside the prompt */
+  media?: { data: string; mimeType: string };
 }): Promise<T> {
   const res = await gemini().models.generateContent({
     model: GEMINI_MODEL,
-    contents: opts.prompt,
+    contents: opts.media
+      ? [{ inlineData: { data: opts.media.data, mimeType: opts.media.mimeType } }, { text: opts.prompt }]
+      : opts.prompt,
     config: {
       systemInstruction: opts.system,
       responseMimeType: "application/json",
