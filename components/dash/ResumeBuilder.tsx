@@ -1,9 +1,11 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { LayoutGrid, Palette, Type, ImageIcon, Pencil, X } from "lucide-react";
+import { ArrowLeft, Download, LayoutGrid, LoaderCircle, Palette, Type, ImageIcon, Pencil, Sparkles, X } from "lucide-react";
 import { useDash } from "./Shell";
 import { updateMyProfile } from "@/lib/account";
+import { callAiTool } from "@/lib/ai/client";
+import type { EnhanceResult } from "@/app/api/ai/enhance/route";
 import { WEB_FONTS } from "@/lib/themes";
 
 /**
@@ -597,7 +599,7 @@ function ScaledPreview({ children, max = 460 }: { children: React.ReactNode; max
 const btn = "inline-flex items-center justify-center min-h-11 px-5 rounded-2xl font-bold text-[14px] transition cursor-pointer press";
 const cardCls = "bg-white border border-line rounded-3xl p-5 shadow-[0_2px_14px_rgba(17,24,39,0.04)]";
 const inputCls = "w-full min-h-11 px-3.5 rounded-[14px] border border-line bg-paper outline-none focus:border-brand focus:ring-[3px] focus:ring-brand/15 transition";
-const FONT_SCALE_MIN = 0.7;
+const FONT_SCALE_MIN = 0.55;
 const FONT_SCALE_MAX = 1.2;
 
 type DetailKey = "name" | "headline" | "phone" | "location" | "summary";
@@ -620,6 +622,8 @@ interface EditorProps {
   onFontScale: (v: number) => void;
   details: Record<DetailKey, string>;
   onDetail: (key: DetailKey, value: string) => void;
+  onEnhance: (kind: "summary" | "headline") => void;
+  enhancing: "summary" | "headline" | null;
   onBack: () => void;
   onPickSibling: (t: TemplateSpec) => void;
   onDownload: () => void;
@@ -630,10 +634,10 @@ interface EditorProps {
   printRef: React.RefObject<HTMLDivElement | null>;
 }
 
-type ToolId = "templates" | "color" | "font" | "photo" | "edit";
+type ToolId = "templates" | "color" | "font" | "photo" | "edit" | "ai";
 
 function ResumeEditor(props: EditorProps) {
-  const { spec, display, bare, counts, accent, onAccent, showPhoto, onPhoto, photoAvailable, fontId, onFont, fam, fontScale, onFontScale, details, onDetail, onBack, onPickSibling, onDownload, downloading, onSave, busy, note, printRef } = props;
+  const { spec, display, bare, counts, accent, onAccent, showPhoto, onPhoto, photoAvailable, fontId, onFont, fam, fontScale, onFontScale, details, onDetail, onEnhance, enhancing, onBack, onPickSibling, onDownload, downloading, onSave, busy, note, printRef } = props;
   const [tool, setTool] = useState<ToolId | null>(null); // null = no mobile sheet open
   const [family, setFamily] = useState<Kind>(spec.kind); // which family the Templates panel browses
 
@@ -730,14 +734,66 @@ function ResumeEditor(props: EditorProps) {
     </div>
   );
 
+  const enhanceBtn = (kind: "summary" | "headline", disabled: boolean) => (
+    <button
+      type="button"
+      onClick={() => onEnhance(kind)}
+      disabled={disabled || enhancing !== null}
+      className="inline-flex items-center gap-1.5 text-[12px] font-extrabold text-brand cursor-pointer disabled:opacity-45 disabled:cursor-not-allowed"
+    >
+      {enhancing === kind ? <LoaderCircle className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+      {enhancing === kind ? "Enhancing…" : "Enhance with AI"}
+    </button>
+  );
+
   const detailsPanel = (
     <div className="space-y-2.5">
       <input value={details.name} onChange={(e) => onDetail("name", e.target.value)} placeholder="Full name" className={inputCls} />
-      <input value={details.headline} onChange={(e) => onDetail("headline", e.target.value)} placeholder="Headline" className={inputCls} />
+      <div>
+        <input value={details.headline} onChange={(e) => onDetail("headline", e.target.value)} placeholder="Headline" className={inputCls} />
+        <div className="mt-1.5">{enhanceBtn("headline", !details.headline.trim())}</div>
+      </div>
       <input value={details.phone} onChange={(e) => onDetail("phone", e.target.value)} placeholder="Phone" className={inputCls} />
       <input value={details.location} onChange={(e) => onDetail("location", e.target.value)} placeholder="Location" className={inputCls} />
-      <textarea value={details.summary} onChange={(e) => onDetail("summary", e.target.value)} rows={3} placeholder="Professional summary" className={`${inputCls} min-h-0 py-3 resize-y`} />
+      <div>
+        <textarea value={details.summary} onChange={(e) => onDetail("summary", e.target.value)} rows={4} placeholder="Professional summary" className={`${inputCls} min-h-0 py-3 resize-y`} />
+        <div className="mt-1.5">{enhanceBtn("summary", !details.summary.trim())}</div>
+      </div>
       <p className="text-[12px] text-ink-3">Skills, experience & education are edited on the Profile tab.</p>
+    </div>
+  );
+
+  const aiPanel = (
+    <div className="space-y-3">
+      <p className="text-[12.5px] text-ink-2 leading-relaxed">Polish what you&apos;ve written — the AI improves wording only, it never invents experience.</p>
+      <button
+        type="button"
+        onClick={() => onEnhance("summary")}
+        disabled={!details.summary.trim() || enhancing !== null}
+        className="w-full flex items-center gap-2.5 rounded-2xl border border-line px-3.5 py-3 text-left hover:bg-sunken transition cursor-pointer disabled:opacity-45 disabled:cursor-not-allowed"
+      >
+        {enhancing === "summary" ? <LoaderCircle className="h-4 w-4 animate-spin text-brand shrink-0" /> : <Sparkles className="h-4 w-4 text-brand shrink-0" />}
+        <span>
+          <span className="block text-[13px] font-extrabold">{enhancing === "summary" ? "Enhancing summary…" : "Enhance my summary"}</span>
+          <span className="block text-[11.5px] text-ink-3">Sharper wording, stronger first line, one-page length.</span>
+        </span>
+      </button>
+      <button
+        type="button"
+        onClick={() => onEnhance("headline")}
+        disabled={!details.headline.trim() || enhancing !== null}
+        className="w-full flex items-center gap-2.5 rounded-2xl border border-line px-3.5 py-3 text-left hover:bg-sunken transition cursor-pointer disabled:opacity-45 disabled:cursor-not-allowed"
+      >
+        {enhancing === "headline" ? <LoaderCircle className="h-4 w-4 animate-spin text-brand shrink-0" /> : <Sparkles className="h-4 w-4 text-brand shrink-0" />}
+        <span>
+          <span className="block text-[13px] font-extrabold">{enhancing === "headline" ? "Enhancing headline…" : "Sharpen my headline"}</span>
+          <span className="block text-[11.5px] text-ink-3">Searchable job title first — how recruiters find you.</span>
+        </span>
+      </button>
+      {(!details.summary.trim() || !details.headline.trim()) && (
+        <p className="text-[11.5px] text-ink-3">Write something in Details first — the AI polishes your words, it doesn&apos;t start from nothing.</p>
+      )}
+      <a href="/dashboard/ai/resume-optimizer" className="block text-[12.5px] font-extrabold text-brand">Full resume review → AI Resume Optimizer</a>
     </div>
   );
 
@@ -747,6 +803,7 @@ function ResumeEditor(props: EditorProps) {
     { id: "font", label: "Font", title: "Font", Icon: Type, panel: fontPanel },
     ...(spec.kind === "visual" ? [{ id: "photo" as ToolId, label: "Photo", title: "Photo", Icon: ImageIcon, panel: photoPanel }] : []),
     { id: "edit", label: "Details", title: "Your details", Icon: Pencil, panel: detailsPanel },
+    { id: "ai", label: "AI", title: "AI assist", Icon: Sparkles, panel: aiPanel },
   ];
   const activeTool = tools.find((t) => t.id === tool); // mobile sheet
   const deskTool = tools.find((t) => t.id === (tool ?? "templates")) ?? tools[0]; // desktop panel (always one active)
@@ -772,23 +829,47 @@ function ResumeEditor(props: EditorProps) {
 
   return (
     <div className="relative pb-24 lg:pb-0">
-      {/* top bar */}
-      <div className="flex flex-wrap items-center gap-3">
-        <button onClick={onBack} className="inline-flex items-center gap-1.5 text-[13.5px] font-bold text-ink-2 hover:text-ink cursor-pointer">← Templates</button>
-        <div className="flex-1 min-w-[120px]">
-          <h1 className="text-[18px] font-extrabold leading-tight">{spec.name}</h1>
-          <p className="text-[12px] text-ink-3">{spec.kind === "text" ? "Text · ATS-friendly" : "Visual theme"}</p>
-        </div>
-        <button onClick={onDownload} disabled={downloading} className={`${btn} border border-line hover:bg-sunken disabled:opacity-60`}>
-          {downloading ? "Preparing PDF…" : "Download PDF"}
+      {/* mobile top row — desktop shows back + name inside the left panel */}
+      <div className="flex items-center gap-3 lg:hidden">
+        <button onClick={onBack} aria-label="Back to templates" className="grid h-10 w-10 place-items-center rounded-xl border border-line text-ink-2 hover:text-ink cursor-pointer">
+          <ArrowLeft className="h-4.5 w-4.5" />
         </button>
-        <button onClick={onSave} disabled={busy} className={`${btn} bg-accent hover:bg-accent-pressed text-ink disabled:opacity-50`}>{busy ? "Saving…" : "Save"}</button>
+        <div className="min-w-0">
+          <h1 className="text-[16px] font-extrabold leading-tight truncate">{spec.name}</h1>
+          <p className="text-[11.5px] text-ink-3">{spec.kind === "text" ? "Text · ATS-friendly" : "Visual theme"}</p>
+        </div>
+        {note && <span className="ml-auto text-[12px] font-semibold text-green-600 truncate">{note}</span>}
       </div>
 
-      {/* desktop: canvas | active panel | vertical tool rail (rail on the right) */}
-      <div className="mt-4 lg:grid lg:grid-cols-[minmax(0,1fr)_300px_84px] lg:gap-4 lg:items-start">
+      {/* desktop: tool rail | active panel | canvas — tools live on the LEFT so
+          the resume takes the full remaining width */}
+      <div className="mt-3 lg:mt-0 lg:grid lg:grid-cols-[84px_300px_minmax(0,1fr)] lg:gap-4 lg:items-start">
+        {/* desktop vertical tool rail */}
+        <nav aria-label="Resume tools" className="hidden lg:flex lg:flex-col lg:sticky lg:top-20 gap-1 rounded-3xl border border-line bg-white p-2 shadow-[0_2px_14px_rgba(17,24,39,0.04)]">
+          <Rail />
+        </nav>
+
+        {/* desktop panel — back + template name on top, then the active tool */}
+        <aside className="hidden lg:flex lg:flex-col lg:sticky lg:top-20 max-h-[calc(100vh-6rem)] overflow-hidden rounded-3xl border border-line bg-white shadow-[0_2px_14px_rgba(17,24,39,0.04)]">
+          <div className="px-4 py-3 border-b border-line flex items-center gap-2.5">
+            <button onClick={onBack} aria-label="Back to templates" className="grid h-9 w-9 place-items-center rounded-xl border border-line text-ink-2 hover:text-ink transition cursor-pointer shrink-0">
+              <ArrowLeft className="h-4 w-4" />
+            </button>
+            <div className="min-w-0">
+              <h1 className="text-[14px] font-extrabold leading-tight truncate">{spec.name}</h1>
+              <p className="text-[11px] text-ink-3">{spec.kind === "text" ? "Text · ATS-friendly" : "Visual theme"}</p>
+            </div>
+          </div>
+          <div className="px-4 py-2.5 border-b border-line flex items-center justify-between">
+            <h2 className="text-[13px] font-extrabold">{deskTool.title}</h2>
+            {note && <span className="text-[12px] font-semibold text-green-600 truncate">{note}</span>}
+          </div>
+          <div className="p-4 overflow-y-auto">{deskTool.panel}</div>
+        </aside>
+
+        {/* canvas — full remaining width, bigger paper */}
         <div className="rounded-2xl border border-line bg-sunken p-4 sm:p-6">
-          <ScaledPreview>
+          <ScaledPreview max={640}>
             <FontCtx.Provider value={fam}>
               <SizeCtx.Provider value={fontScale}>
                 <ResumePreview data={display} spec={spec} accent={accent} showPhoto={showPhoto} />
@@ -799,20 +880,25 @@ function ResumeEditor(props: EditorProps) {
             {bare ? "Sample content shown — fill your Profile and it appears here. Samples are never saved or downloaded." : `From your profile · ${counts.exp} exp · ${counts.edu} edu · ${counts.skills} skills`}
           </p>
         </div>
+      </div>
 
-        {/* desktop panel — shows the active tool's content vertically */}
-        <aside className="hidden lg:flex lg:flex-col lg:sticky lg:top-20 max-h-[calc(100vh-6rem)] overflow-hidden rounded-3xl border border-line bg-white shadow-[0_2px_14px_rgba(17,24,39,0.04)]">
-          <div className="px-4 py-3 border-b border-line flex items-center justify-between">
-            <h2 className="text-[14px] font-extrabold">{deskTool.title}</h2>
-            {note && <span className="text-[12px] font-semibold text-green-600">{note}</span>}
-          </div>
-          <div className="p-4 overflow-y-auto">{deskTool.panel}</div>
-        </aside>
-
-        {/* desktop vertical tool rail */}
-        <nav aria-label="Resume tools" className="hidden lg:flex lg:flex-col lg:sticky lg:top-20 gap-1 rounded-3xl border border-line bg-white p-2 shadow-[0_2px_14px_rgba(17,24,39,0.04)]">
-          <Rail />
-        </nav>
+      {/* actions — fixed bottom-right so the top stays clear for the resume */}
+      <div className="fixed z-40 right-4 bottom-[72px] lg:right-6 lg:bottom-6 flex items-center gap-2">
+        <button
+          onClick={onDownload}
+          disabled={downloading}
+          className={`${btn} border border-line bg-white/95 backdrop-blur shadow-[0_10px_36px_rgba(17,24,39,0.14)] hover:bg-sunken disabled:opacity-60 gap-2`}
+        >
+          {downloading ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+          {downloading ? "Preparing…" : "Download PDF"}
+        </button>
+        <button
+          onClick={onSave}
+          disabled={busy}
+          className={`${btn} bg-accent hover:bg-accent-pressed text-ink shadow-[0_10px_36px_rgba(17,24,39,0.18)] disabled:opacity-50`}
+        >
+          {busy ? "Saving…" : "Save"}
+        </button>
       </div>
 
       {/* mobile bottom tool bar */}
@@ -965,6 +1051,33 @@ export default function ResumeBuilder() {
     setNote("Choose “Save as PDF” in the dialog.");
   };
 
+  // AI polish for the headline/summary fields — improves the user's own words.
+  const [enhancing, setEnhancing] = useState<"summary" | "headline" | null>(null);
+  const enhance = async (kind: "summary" | "headline") => {
+    const text = kind === "summary" ? summary : headline;
+    if (!text.trim() || enhancing) return;
+    setEnhancing(kind);
+    setNote("");
+    try {
+      const context = [
+        (profile.skills ?? []).length ? `Skills: ${(profile.skills ?? []).join(", ")}` : "",
+        (profile.experience ?? []).length ? `Roles: ${(profile.experience ?? []).map((e) => `${e.role} at ${e.company}`).join("; ")}` : "",
+      ]
+        .filter(Boolean)
+        .join("\n");
+      const res = await callAiTool<EnhanceResult>("enhance", { kind, text, context });
+      if (res.improved?.trim()) {
+        if (kind === "summary") setSummary(res.improved.trim());
+        else setHeadline(res.improved.trim());
+        setNote("Enhanced ✨ — review, then Save.");
+      }
+    } catch {
+      setNote("Could not enhance right now — try again.");
+    } finally {
+      setEnhancing(null);
+    }
+  };
+
   const [downloading, setDownloading] = useState(false);
   const download = async () => {
     const node = printRef.current;
@@ -1060,6 +1173,8 @@ export default function ResumeBuilder() {
       onDetail={onDetail}
       onBack={() => setSpec(null)}
       onPickSibling={(t) => { setSpec(t); setAccent(t.accent); }}
+      onEnhance={enhance}
+      enhancing={enhancing}
       onDownload={download}
       downloading={downloading}
       onSave={save}
