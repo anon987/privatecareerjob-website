@@ -36,17 +36,21 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [err, setErr] = useState("");
+  const [gateErr, setGateErr] = useState("");
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (u) => {
       setUser(u);
+      setGateErr("");
       if (u) {
         try {
-          await callAdmin("stats");
+          // allowlist-only check — independent of Firestore/data endpoints
+          await callAdmin("me");
           setIsAdmin(true);
-        } catch {
+        } catch (e) {
           setIsAdmin(false);
+          setGateErr(e instanceof Error ? e.message : "Admin check failed.");
         }
       } else {
         setIsAdmin(false);
@@ -81,7 +85,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
           <p className="mt-1 text-sm opacity-60">privatesectorjob control panel</p>
           {user && !isAdmin ? (
             <p className="mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">
-              {user.email} is not an admin account.{" "}
+              Signed in as {user.email} — {gateErr || "not an admin account."}{" "}
               <button type="button" className="underline" onClick={() => signOut(auth)}>
                 Sign out
               </button>
