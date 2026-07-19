@@ -9,6 +9,8 @@ export interface BlogPost {
   keywords: string[];
   content: string;
   coverEmoji: string;
+  /** /api/blog-image/{id} URL — used as the hero and og:image */
+  featuredImage: string;
   author: string;
   createdAt: number;
   updatedAt: number;
@@ -22,6 +24,7 @@ function toPost(slug: string, d: FirebaseFirestore.DocumentData): BlogPost {
     keywords: Array.isArray(d.keywords) ? d.keywords : [],
     content: d.content ?? "",
     coverEmoji: d.coverEmoji ?? "📝",
+    featuredImage: d.featuredImage ?? "",
     author: d.author ?? "privatesectorjob",
     createdAt: d.createdAt?.toMillis?.() ?? 0,
     updatedAt: d.updatedAt?.toMillis?.() ?? 0,
@@ -55,6 +58,12 @@ function escapeHtml(s: string): string {
 
 function inline(s: string): string {
   return s
+    // images first so the link rule doesn't half-consume them; src restricted to
+    // our own image route or https
+    .replace(
+      /!\[([^\]]*)\]\(((?:\/api\/blog-image\/[A-Za-z0-9]+|https:\/\/[^)\s]+))\)/g,
+      '<img src="$2" alt="$1" loading="lazy" />'
+    )
     .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
     .replace(/\*([^*\n]+)\*/g, "<em>$1</em>")
     .replace(/`([^`]+)`/g, "<code>$1</code>")

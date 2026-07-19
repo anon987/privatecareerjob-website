@@ -30,7 +30,12 @@ export default async function BlogIndex() {
               href={`/blog/${p.slug}`}
               className="rounded-2xl border border-black/10 p-6 transition hover:border-violet-400 hover:shadow-md"
             >
-              <div className="text-3xl">{p.coverEmoji}</div>
+              {p.featuredImage ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={p.featuredImage} alt="" className="aspect-video w-full rounded-xl border border-black/5 object-cover" />
+              ) : (
+                <div className="text-3xl">{p.coverEmoji}</div>
+              )}
               <h2 className="mt-3 text-xl font-semibold">{p.title}</h2>
               <p className="mt-2 text-sm opacity-70 line-clamp-3">{p.description}</p>
               <p className="mt-3 text-xs opacity-50">

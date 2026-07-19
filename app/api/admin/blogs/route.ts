@@ -14,6 +14,7 @@ interface BlogInput {
   keywords?: string[];
   content?: string;
   coverEmoji?: string;
+  featuredImage?: string;
   published?: boolean;
 }
 
@@ -49,6 +50,7 @@ export async function POST(req: Request): Promise<Response> {
       keywords: (body.keywords ?? []).map((k) => String(k).trim()).filter(Boolean).slice(0, 15),
       content: String(body.content).slice(0, 200_000),
       coverEmoji: (body.coverEmoji ?? "📝").slice(0, 8),
+      featuredImage: /^\/api\/blog-image\/[A-Za-z0-9]+$/.test(body.featuredImage ?? "") ? body.featuredImage : "",
       published: !!body.published,
       author: admin.email,
       updatedAt: FieldValue.serverTimestamp(),

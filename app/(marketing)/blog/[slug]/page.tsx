@@ -26,8 +26,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       url: `${SITE_ORIGIN}/blog/${post.slug}`,
       publishedTime: post.createdAt ? new Date(post.createdAt).toISOString() : undefined,
       modifiedTime: post.updatedAt ? new Date(post.updatedAt).toISOString() : undefined,
+      ...(post.featuredImage ? { images: [{ url: `${SITE_ORIGIN}${post.featuredImage}`, width: 1400, height: 788 }] } : {}),
     },
-    twitter: { card: "summary_large_image", title: post.title, description: post.description },
+    twitter: {
+      card: "summary_large_image",
+      title: post.title,
+      description: post.description,
+      ...(post.featuredImage ? { images: [`${SITE_ORIGIN}${post.featuredImage}`] } : {}),
+    },
   };
 }
 
@@ -44,6 +50,7 @@ export default async function BlogPost({ params }: Props) {
     keywords: post.keywords.join(", "),
     datePublished: post.createdAt ? new Date(post.createdAt).toISOString() : undefined,
     dateModified: post.updatedAt ? new Date(post.updatedAt).toISOString() : undefined,
+    ...(post.featuredImage ? { image: `${SITE_ORIGIN}${post.featuredImage}` } : {}),
     author: { "@type": "Organization", name: "privatesectorjob", url: SITE_ORIGIN },
     publisher: { "@type": "Organization", name: "privatesectorjob", url: SITE_ORIGIN },
     mainEntityOfPage: `${SITE_ORIGIN}/blog/${post.slug}`,
@@ -55,14 +62,19 @@ export default async function BlogPost({ params }: Props) {
       <Link href="/blog" className="text-sm text-violet-600 hover:underline">
         ← All articles
       </Link>
-      <div className="mt-6 text-5xl">{post.coverEmoji}</div>
+      {post.featuredImage ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={post.featuredImage} alt={post.title} className="mt-6 aspect-video w-full rounded-2xl border border-black/10 object-cover" />
+      ) : (
+        <div className="mt-6 text-5xl">{post.coverEmoji}</div>
+      )}
       <h1 className="mt-4 text-4xl font-bold leading-tight">{post.title}</h1>
       <p className="mt-3 text-lg opacity-75">{post.description}</p>
       <p className="mt-3 text-sm opacity-50">
         {post.createdAt ? new Date(post.createdAt).toLocaleDateString("en-IN", { dateStyle: "long" }) : ""}
       </p>
       <div
-        className="prose-psj mt-10 space-y-4 leading-relaxed [&_h2]:mt-8 [&_h2]:text-2xl [&_h2]:font-semibold [&_h3]:mt-6 [&_h3]:text-xl [&_h3]:font-semibold [&_ul]:list-disc [&_ul]:pl-6 [&_a]:text-violet-600 [&_a]:underline [&_code]:rounded [&_code]:bg-black/5 [&_code]:px-1"
+        className="prose-psj mt-10 space-y-4 leading-relaxed [&_h2]:mt-8 [&_h2]:text-2xl [&_h2]:font-semibold [&_h3]:mt-6 [&_h3]:text-xl [&_h3]:font-semibold [&_ul]:list-disc [&_ul]:pl-6 [&_a]:text-violet-600 [&_a]:underline [&_code]:rounded [&_code]:bg-black/5 [&_code]:px-1 [&_img]:my-3 [&_img]:w-full [&_img]:rounded-2xl [&_img]:border [&_img]:border-black/10"
         dangerouslySetInnerHTML={{ __html: renderMarkdown(post.content) }}
       />
       <div className="mt-14 rounded-2xl border border-violet-200 bg-violet-50 p-6">
