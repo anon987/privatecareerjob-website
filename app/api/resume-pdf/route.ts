@@ -1,6 +1,7 @@
 import chromium from "@sparticuz/chromium";
 import puppeteer from "puppeteer-core";
 import { verifyRequest } from "@/lib/ai/serverAuth";
+import { rateLimit, RATE_LIMITED_MESSAGE } from "@/lib/ai/rateLimit";
 
 /**
  * Renders the resume paper (the builder's print markup) to a real,
@@ -22,6 +23,11 @@ interface Input {
 export async function POST(req: Request): Promise<Response> {
   const uid = await verifyRequest(req);
   if (!uid) return Response.json({ error: "Please sign in to download your resume." }, { status: 401 });
+
+  // Chromium renders are expensive — 5/min per user is plenty for real use
+  if (!rateLimit(`pdf:${uid}`, 5, 60_000)) {
+    return Response.json({ error: RATE_LIMITED_MESSAGE }, { status: 429 });
+  }
 
   let body: Input;
   try {

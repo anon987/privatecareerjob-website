@@ -1,4 +1,5 @@
 import { verifyRequest } from "./serverAuth";
+import { rateLimit, RATE_LIMITED_MESSAGE } from "./rateLimit";
 
 /**
  * Shared route-handler factory for the AI tools: auth gate → body parse →
@@ -20,6 +21,11 @@ export function aiRoute<In>(handler: (body: In, uid: string) => Promise<unknown>
   return async function POST(req: Request): Promise<Response> {
     const uid = await verifyRequest(req);
     if (!uid) return Response.json({ error: "Please sign in to use AI tools." }, { status: 401 });
+
+    // 20 AI calls/min and 150/hour per user — generous for real use, hostile to loops
+    if (!rateLimit(`ai-m:${uid}`, 20, 60_000) || !rateLimit(`ai-h:${uid}`, 150, 3_600_000)) {
+      return Response.json({ error: RATE_LIMITED_MESSAGE }, { status: 429 });
+    }
 
     let body: In;
     try {
