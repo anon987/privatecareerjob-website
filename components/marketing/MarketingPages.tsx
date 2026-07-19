@@ -1,5 +1,6 @@
 "use client";
 
+import { ContactForm } from "./ContactForm";
 import {
   AiToolsGrid,
   Comparison,
@@ -151,6 +152,9 @@ export function ContactMarketingPage() {
         secondary={{ href: "/signup", label: "Create account" }}
         visual="contact"
       />
+      <section className="px-6 py-14">
+        <ContactForm />
+      </section>
       <ResourceCards />
       <FAQSection />
       <CTASection />

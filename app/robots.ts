@@ -8,7 +8,7 @@ import { SITE_ORIGIN } from "@/lib/site";
  */
 export default function robots(): MetadataRoute.Robots {
   return {
-    rules: { userAgent: "*", allow: "/" },
+    rules: { userAgent: "*", allow: "/", disallow: ["/admin", "/api/", "/dashboard"] },
     sitemap: `${SITE_ORIGIN}/sitemap.xml`,
   };
 }
