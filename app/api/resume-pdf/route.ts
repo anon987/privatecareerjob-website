@@ -53,6 +53,21 @@ export async function POST(req: Request): Promise<Response> {
       headless: true,
     });
     const page = await browser.newPage();
+    // The HTML is user-supplied — lock the page down so it can't be used for
+    // SSRF or resource abuse: no page scripts, and network access limited to
+    // Google Fonts (everything else in the resume is inline/data: URIs).
+    await page.setJavaScriptEnabled(false);
+    await page.setRequestInterception(true);
+    page.on("request", (r) => {
+      const u = r.url();
+      const ok =
+        u.startsWith("data:") ||
+        u.startsWith("about:") ||
+        u.startsWith("https://fonts.googleapis.com/") ||
+        u.startsWith("https://fonts.gstatic.com/");
+      if (ok) r.continue().catch(() => {});
+      else r.abort().catch(() => {});
+    });
     await page.setContent(doc, { waitUntil: "load", timeout: 30_000 });
     // Web fonts finish loading after `load`; wait so text renders in the chosen font.
     await page.evaluate(() => (document as Document & { fonts: { ready: Promise<unknown> } }).fonts.ready);
