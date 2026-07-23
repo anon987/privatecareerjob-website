@@ -9,12 +9,12 @@ import { getStorage } from "firebase/storage";
  * Firestore security rules.
  */
 const firebaseConfig = {
-  apiKey: "AIzaSyB75zshjrs64bVAuLDxg-U9uoXMenxOlaQ",
-  authDomain: "privatesectorjob.firebaseapp.com",
-  projectId: "privatesectorjob",
-  storageBucket: "privatesectorjob.firebasestorage.app",
-  messagingSenderId: "410279228662",
-  appId: "1:410279228662:web:04f178fe5462c614e168d7",
+  apiKey: "AIzaSyCjzZHSMOMxruppO4WplEN_bTomvoTEFKI",
+  authDomain: "privatesectorjob-807b8.firebaseapp.com",
+  projectId: "privatesectorjob-807b8",
+  storageBucket: "privatesectorjob-807b8.firebasestorage.app",
+  messagingSenderId: "1035722691373",
+  appId: "1:1035722691373:web:efe7a10aa62205b1a9b9a4",
 };
 
 const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);

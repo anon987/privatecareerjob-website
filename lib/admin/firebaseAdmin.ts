@@ -10,7 +10,7 @@ import { getFirestore, type Firestore } from "firebase-admin/firestore";
  * (which is credential-less on purpose).
  */
 
-const PROJECT_ID = "privatesectorjob";
+const PROJECT_ID = "privatesectorjob-807b8";
 const APP_NAME = "admin-data";
 
 function adminApp(): App {
