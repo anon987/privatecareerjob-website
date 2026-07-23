@@ -168,7 +168,7 @@ export function MarketingShell({ children }: { children: React.ReactNode }) {
             ["Company", [["About", "/about"], ["Contact", "/contact"], ["Create account", "/signup"]]],
             ["Product", [["Job seekers", "/job-seekers"], ["Recruiters", "/recruiters"], ["Resume maker", "/resume-maker"], ["AI tools", "/ai-tools"]]],
             ["Resources", [["Guides", "/resources"], ["Resume maker", "/resume-maker"], ["Hiring pipeline", "/recruiters"]]],
-            ["Support", [["Help center", "/resources"], ["Privacy", "/privacy"], ["Terms", "/terms"]]],
+            ["Support", [["Help center", "/resources"], ["Privacy", "/privacy"], ["Terms", "/terms"], ["Delete account", "/data-deletion"]]],
           ].map(([heading, links]) => (
             <div key={heading as string}>
               <h3 className="text-sm font-extrabold text-ink">{heading as string}</h3>
