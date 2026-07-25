@@ -9,8 +9,8 @@ const grotesk = Space_Grotesk({ subsets: ["latin"], variable: "--font-grotesk" }
 const nunito = Nunito({ subsets: ["latin"], variable: "--font-nunito" });
 const jbmono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-jbmono" });
 
-const SITE_NAME = "privatesectorjob";
-const DEFAULT_TITLE = "privatesectorjob — India's premium job platform";
+const SITE_NAME = "privatecareerjob";
+const DEFAULT_TITLE = "privatecareerjob — India's premium job platform";
 const DEFAULT_DESCRIPTION =
   "Find verified private-sector jobs, track every application live, and hire great people — one premium platform for job seekers and recruiters across India.";
 

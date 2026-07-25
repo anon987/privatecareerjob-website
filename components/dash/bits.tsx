@@ -125,7 +125,7 @@ export function JobCard({
 }) {
   const [copied, setCopied] = useState(false);
   const salary = formatSalary(job.salaryMin, job.salaryMax);
-  const url = `https://privatesectorjob.vercel.app/dashboard/jobs/${job.id}`;
+  const url = `https://privatecareerjob.com/dashboard/jobs/${job.id}`;
 
   const share = async () => {
     const text = `${job.title} at ${job.companyName} — ${url}`;

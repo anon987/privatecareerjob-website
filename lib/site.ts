@@ -4,8 +4,8 @@
  * are needed — pages can be server-rendered for SEO without the Admin SDK.
  */
 
-export const PROJECT_ID = "privatesectorjob-807b8";
-export const SITE_ORIGIN = "https://privatesectorjob.vercel.app";
+export const PROJECT_ID = "private-career-job-e46ec";
+export const SITE_ORIGIN = "https://privatecareerjob.com";
 
 export type SiteTemplate = "aurora" | "paper" | "noir" | "banner";
 export type SiteFont = "modern" | "serif" | "grotesk" | "rounded" | "mono";

@@ -196,7 +196,7 @@ export function Customize({ site, onChange }: { site: PublicSite; onChange: (s: 
               {busy ? "Saving…" : "Save changes"}
             </button>
             {note && <p className={`text-[12.5px] text-center ${softText}`}>{note}</p>}
-            <p className={`text-[11.5px] text-center ${softText}`}>Content (skills, experience, projects) is edited in the privatesectorjob app.</p>
+            <p className={`text-[11.5px] text-center ${softText}`}>Content (skills, experience, projects) is edited in the privatecareerjob app.</p>
           </div>
         </aside>
       )}

@@ -23,7 +23,7 @@ export function HomeMarketingPage() {
         eyebrow="Verified jobs. Real-time application tracking."
         title="The job platform India deserves."
         gradient="Premium for both sides."
-        body="PrivateSectorJob brings seekers and recruiters into one polished platform for verified roles, transparent applications, and faster hiring decisions."
+        body="PrivateCareerJob brings seekers and recruiters into one polished platform for verified roles, transparent applications, and faster hiring decisions."
         primary={{ href: "/signup?role=seeker", label: "Create seeker account" }}
         secondary={{ href: "/recruiters", label: "Explore recruiting" }}
         visual="phone"
@@ -122,11 +122,11 @@ export function AboutMarketingPage() {
   return (
     <>
       <PageHero
-        eyebrow="About PrivateSectorJob"
+        eyebrow="About PrivateCareerJob"
         title="A more transparent"
         gradient="private-sector job market."
         body="We are building a cleaner, more trustworthy experience for candidates and employers: verified opportunities, live tracking, public profiles, recruiter workflows, and clear AI previews."
-        primary={{ href: "/signup", label: "Join PrivateSectorJob" }}
+        primary={{ href: "/signup", label: "Join PrivateCareerJob" }}
         secondary={{ href: "/contact", label: "Contact us" }}
         visual="pipeline"
       />
@@ -146,9 +146,9 @@ export function ContactMarketingPage() {
       <PageHero
         eyebrow="Contact"
         title="Talk to the"
-        gradient="PrivateSectorJob team."
+        gradient="PrivateCareerJob team."
         body="Reach us for seeker support, recruiter onboarding, product questions, or partnership conversations. The fastest path into the platform is still creating your account."
-        primary={{ href: "mailto:support@privatesectorjob.com", label: "Email support" }}
+        primary={{ href: "mailto:support@privatecareerjob.com", label: "Email support" }}
         secondary={{ href: "/signup", label: "Create account" }}
         visual="contact"
       />

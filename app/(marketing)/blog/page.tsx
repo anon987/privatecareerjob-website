@@ -18,7 +18,7 @@ export default async function BlogIndex() {
       <p className="text-sm font-semibold uppercase tracking-widest text-violet-600">Blog</p>
       <h1 className="mt-2 text-4xl font-bold">Career advice that gets you hired</h1>
       <p className="mt-3 text-lg opacity-75">
-        Practical guides on resumes, interviews, salaries and job-scam safety — from the privatesectorjob team.
+        Practical guides on resumes, interviews, salaries and job-scam safety — from the privatecareerjob team.
       </p>
       {posts.length === 0 ? (
         <p className="mt-12 opacity-60">No articles yet — check back soon.</p>

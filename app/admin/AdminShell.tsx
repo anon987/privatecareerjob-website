@@ -82,7 +82,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       <div className="flex min-h-screen items-center justify-center bg-neutral-50 px-6">
         <form onSubmit={signIn} className="w-full max-w-sm rounded-2xl border border-black/10 bg-white p-8 shadow-sm">
           <h1 className="text-2xl font-bold">Admin sign-in</h1>
-          <p className="mt-1 text-sm opacity-60">privatesectorjob control panel</p>
+          <p className="mt-1 text-sm opacity-60">privatecareerjob control panel</p>
           {user && !isAdmin ? (
             <p className="mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">
               Signed in as {user.email} — {gateErr || "not an admin account."}{" "}

@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import SignupCard from "./SignupCard";
 
-export const metadata: Metadata = { title: "Sign up — privatesectorjob" };
+export const metadata: Metadata = { title: "Sign up — privatecareerjob" };
 
 export default function SignupPage() {
   return (

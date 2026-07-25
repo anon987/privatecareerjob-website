@@ -65,7 +65,7 @@ export default function AdminContacts() {
               {m.status !== "resolved" ? (
                 <button onClick={() => setStatus(m.id, "resolved")} className="rounded-lg border border-green-300 px-3 py-1 text-green-700 hover:bg-green-50">Resolve</button>
               ) : null}
-              <a href={`mailto:${m.email}?subject=Re: your message to privatesectorjob`} className="rounded-lg border border-black/15 px-3 py-1 hover:bg-neutral-50">Reply</a>
+              <a href={`mailto:${m.email}?subject=Re: your message to privatecareerjob`} className="rounded-lg border border-black/15 px-3 py-1 hover:bg-neutral-50">Reply</a>
               <button onClick={() => remove(m.id)} className="ml-auto rounded-lg px-3 py-1 text-red-600 hover:bg-red-50">Delete</button>
             </div>
           </div>

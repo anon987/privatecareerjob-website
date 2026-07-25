@@ -4,7 +4,7 @@ import { ImageResponse } from "next/og";
  *  wordmark and tagline. Pages without their own og image inherit this. */
 
 export const runtime = "edge";
-export const alt = "privatesectorjob — India's premium job platform";
+export const alt = "privatecareerjob — India's premium job platform";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -40,7 +40,7 @@ export default function OgImage() {
           >
             p
           </div>
-          <div style={{ fontSize: 44, fontWeight: 700 }}>privatesectorjob</div>
+          <div style={{ fontSize: 44, fontWeight: 700 }}>privatecareerjob</div>
         </div>
         <div style={{ fontSize: 68, fontWeight: 700, lineHeight: 1.15, marginTop: 48, maxWidth: 980 }}>
           India&apos;s premium job platform

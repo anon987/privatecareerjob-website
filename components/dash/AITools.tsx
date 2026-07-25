@@ -20,7 +20,7 @@ export default function AITools() {
     <div>
       <h1 className="text-[24px] font-extrabold tracking-[-0.4px]">AI career tools</h1>
       <p className="text-ink-2 text-[14px] mt-1 max-w-[560px]">
-        A suite of AI assistants built around your privatesectorjob profile — the help other portals charge thousands for, free with your account.
+        A suite of AI assistants built around your privatecareerjob profile — the help other portals charge thousands for, free with your account.
       </p>
       <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {TOOLS.map((t) => (

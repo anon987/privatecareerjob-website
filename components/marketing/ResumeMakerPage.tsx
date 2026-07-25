@@ -101,7 +101,7 @@ const FEATURES = [
 const RESUME_FAQS = [
   { q: "Is the resume maker really free?", a: "Yes. Templates, AI enhancement, ATS checks and PDF downloads are all free with your account — no watermarks, no premium template wall, no per-download charges." },
   { q: "Will my resume pass ATS software?", a: "The Text (ATS) templates are single-column, machine-readable layouts, and every download is a genuine text-based PDF rather than an image — the two things applicant tracking systems care about most." },
-  { q: "Can it fill my details automatically?", a: "Yes, two ways: your privatesectorjob profile flows straight into any template, or upload an existing resume PDF and AI extracts your experience, education and skills into your profile for review." },
+  { q: "Can it fill my details automatically?", a: "Yes, two ways: your privatecareerjob profile flows straight into any template, or upload an existing resume PDF and AI extracts your experience, education and skills into your profile for review." },
   { q: "What does the AI actually change?", a: "Only the wording. The enhance buttons rewrite your summary or headline for clarity and impact but never add skills, employers, numbers or years you didn't state." },
   { q: "What format do I get?", a: "A one-page A4 PDF with real selectable text, named after you and ready to attach to applications on any portal." },
 ];

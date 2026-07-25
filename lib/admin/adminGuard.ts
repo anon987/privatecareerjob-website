@@ -7,7 +7,7 @@ import { getAuth } from "firebase-admin/auth";
  * defaults to the site owner).
  */
 
-const PROJECT_ID = "privatesectorjob-807b8";
+const PROJECT_ID = "private-career-job-e46ec";
 
 function allowedEmails(): Set<string> {
   const raw = process.env.ADMIN_EMAILS || "mailtousainews@gmail.com";

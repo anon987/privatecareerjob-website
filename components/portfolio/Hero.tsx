@@ -16,7 +16,7 @@ function initialsOf(name: string, handle: string) {
 }
 
 function pageUrl(handle: string) {
-  return `https://privatesectorjob.vercel.app/@${handle}`;
+  return `https://privatecareerjob.com/@${handle}`;
 }
 
 /** Primary + secondary CTAs and quick actions. `onLight` = rendered on accent/dark hero. */
@@ -50,7 +50,7 @@ export function HeroActions({ site, onLight }: { site: PublicSite; onLight?: boo
   return (
     <div className="flex flex-wrap items-center justify-center gap-2.5 mt-6">
       {site.email ? (
-        <a href={`mailto:${site.email}?subject=Opportunity via privatesectorjob`} className={`inline-flex items-center min-h-11 px-6 rounded-full text-[14.5px] font-bold transition-colors ${solid}`}>
+        <a href={`mailto:${site.email}?subject=Opportunity via privatecareerjob`} className={`inline-flex items-center min-h-11 px-6 rounded-full text-[14.5px] font-bold transition-colors ${solid}`}>
           Hire me
         </a>
       ) : (

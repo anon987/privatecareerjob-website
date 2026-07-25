@@ -292,7 +292,7 @@ export default function AdminBlogs() {
           <div className="rounded-2xl border border-black/10 bg-white p-5">
             <h2 className="font-semibold">Google preview</h2>
             <div className="mt-3 rounded-xl border border-black/10 p-4">
-              <p className="text-xs text-green-700">privatesectorjob.vercel.app › blog › {editing.slug || "your-slug"}</p>
+              <p className="text-xs text-green-700">privatecareerjob.com › blog › {editing.slug || "your-slug"}</p>
               <p className="mt-1 truncate text-lg leading-snug text-blue-700">
                 {editing.title || "Your post title appears here"}
               </p>

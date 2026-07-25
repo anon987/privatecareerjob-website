@@ -9,7 +9,7 @@ import { resolveTheme } from "@/lib/themes";
 
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
-export const alt = "Portfolio on privatesectorjob";
+export const alt = "Portfolio on privatecareerjob";
 
 export default async function OgImage({ params }: { params: Promise<{ handle: string }> }) {
   const raw = decodeURIComponent((await params).handle);
@@ -20,7 +20,7 @@ export default async function OgImage({ params }: { params: Promise<{ handle: st
     return new ImageResponse(
       (
         <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", background: "#14161D", color: "#F2F4F8", fontSize: 56, fontWeight: 800 }}>
-          privatesectorjob
+          privatecareerjob
         </div>
       ),
       size
@@ -72,7 +72,7 @@ export default async function OgImage({ params }: { params: Promise<{ handle: st
         )}
 
         <div style={{ position: "absolute", bottom: 56, left: 72, right: 72, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <div style={{ fontSize: 26, color: "#A6ADBB", display: "flex" }}>privatesectorjob.com/@{site.handle}</div>
+          <div style={{ fontSize: 26, color: "#A6ADBB", display: "flex" }}>privatecareerjob.com/@{site.handle}</div>
           <div style={{ display: "flex", padding: "14px 30px", borderRadius: 999, background: t.accent, color: "#FFFFFF", fontSize: 24, fontWeight: 700 }}>
             View portfolio
           </div>

@@ -5,19 +5,19 @@ import { LegalDoc } from "@/components/marketing/LegalDoc";
 export const metadata: Metadata = {
   title: "Data & Account Deletion",
   description:
-    "How to delete your privatesectorjob account and personal data, what gets removed, and how to request deletion by email.",
+    "How to delete your privatecareerjob account and personal data, what gets removed, and how to request deletion by email.",
   alternates: { canonical: "/data-deletion" },
 };
 
 const UPDATED = "24 July 2026";
-const CONTACT = "support@privatesectorjob.com";
+const CONTACT = "support@privatecareerjob.com";
 
 export default function DataDeletionPage() {
   return (
     <LegalDoc
       title="Data & Account Deletion"
       updated={UPDATED}
-      intro="You can delete your privatesectorjob account and personal data at any time. This page explains how, what is removed, and how to request deletion if you can’t access the app."
+      intro="You can delete your privatecareerjob account and personal data at any time. This page explains how, what is removed, and how to request deletion if you can’t access the app."
     >
       <h2>Delete your account in the app</h2>
       <p>The fastest way is directly in the app:</p>

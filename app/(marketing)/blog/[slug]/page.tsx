@@ -51,8 +51,8 @@ export default async function BlogPost({ params }: Props) {
     datePublished: post.createdAt ? new Date(post.createdAt).toISOString() : undefined,
     dateModified: post.updatedAt ? new Date(post.updatedAt).toISOString() : undefined,
     ...(post.featuredImage ? { image: `${SITE_ORIGIN}${post.featuredImage}` } : {}),
-    author: { "@type": "Organization", name: "privatesectorjob", url: SITE_ORIGIN },
-    publisher: { "@type": "Organization", name: "privatesectorjob", url: SITE_ORIGIN },
+    author: { "@type": "Organization", name: "privatecareerjob", url: SITE_ORIGIN },
+    publisher: { "@type": "Organization", name: "privatecareerjob", url: SITE_ORIGIN },
     mainEntityOfPage: `${SITE_ORIGIN}/blog/${post.slug}`,
   };
 
@@ -80,7 +80,7 @@ export default async function BlogPost({ params }: Props) {
       <div className="mt-14 rounded-2xl border border-violet-200 bg-violet-50 p-6">
         <p className="font-semibold">Ready to put this into practice?</p>
         <p className="mt-1 text-sm opacity-75">
-          Build a free ATS-friendly resume and find verified private-sector jobs on privatesectorjob.
+          Build a free ATS-friendly resume and find verified private-sector jobs on privatecareerjob.
         </p>
         <Link
           href="/signup"

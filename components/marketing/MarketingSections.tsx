@@ -87,7 +87,7 @@ const comparisons = ["Verified Employers", "Live Application Tracking", "Public 
 
 const faqs = [
   { q: "Are the AI tools functional on the marketing pages?", a: "No. These pages only showcase premium AI previews. Every AI card clearly asks users to sign in or notes that the feature is available after login." },
-  { q: "Is PrivateSectorJob free to join?", a: "Yes. Job seekers and recruiters can create an account quickly, then use the role-specific dashboard built for their workflow." },
+  { q: "Is PrivateCareerJob free to join?", a: "Yes. Job seekers and recruiters can create an account quickly, then use the role-specific dashboard built for their workflow." },
   { q: "How does application tracking work?", a: "Applications move through clear stages such as Applied, Viewed, Shortlisted, Interview, Offer, and Hired, so candidates know where they stand." },
   { q: "Can recruiters manage the full hiring pipeline?", a: "Yes. Recruiters can post jobs, review candidates, shortlist applicants, schedule interviews, send offers, and chat with candidates." },
 ];
@@ -238,7 +238,7 @@ export function RecruiterPipeline() {
 }
 
 export function Comparison() {
-  return <section className="bg-[#f7f4ff] py-24 sm:py-28"><div className="mx-auto max-w-[1180px] px-5 sm:px-6"><SectionHeading title="PrivateSectorJob vs Traditional Job Portals" subtitle="A cleaner way to apply, hire, communicate, and track progress without losing context." /><div className="mt-12 overflow-hidden rounded-[1.75rem] border border-white/80 bg-white/75 shadow-[0_24px_80px_rgba(91,75,255,0.1)] backdrop-blur-xl"><div className="grid grid-cols-[1.2fr_0.8fr_0.8fr] border-b border-line bg-white/70 px-4 py-4 text-sm font-extrabold text-ink sm:px-6"><span>Feature</span><span>PrivateSectorJob</span><span>Traditional portals</span></div>{comparisons.map((item) => <div key={item} className="grid grid-cols-[1.2fr_0.8fr_0.8fr] items-center border-b border-line/80 px-4 py-4 text-sm last:border-b-0 sm:px-6"><span className="font-bold text-ink">{item}</span><span><Check className="h-5 w-5 text-brand" /></span><span className="text-ink-3">Limited</span></div>)}</div></div></section>;
+  return <section className="bg-[#f7f4ff] py-24 sm:py-28"><div className="mx-auto max-w-[1180px] px-5 sm:px-6"><SectionHeading title="PrivateCareerJob vs Traditional Job Portals" subtitle="A cleaner way to apply, hire, communicate, and track progress without losing context." /><div className="mt-12 overflow-hidden rounded-[1.75rem] border border-white/80 bg-white/75 shadow-[0_24px_80px_rgba(91,75,255,0.1)] backdrop-blur-xl"><div className="grid grid-cols-[1.2fr_0.8fr_0.8fr] border-b border-line bg-white/70 px-4 py-4 text-sm font-extrabold text-ink sm:px-6"><span>Feature</span><span>PrivateCareerJob</span><span>Traditional portals</span></div>{comparisons.map((item) => <div key={item} className="grid grid-cols-[1.2fr_0.8fr_0.8fr] items-center border-b border-line/80 px-4 py-4 text-sm last:border-b-0 sm:px-6"><span className="font-bold text-ink">{item}</span><span><Check className="h-5 w-5 text-brand" /></span><span className="text-ink-3">Limited</span></div>)}</div></div></section>;
 }
 
 export function Testimonials() {
@@ -252,7 +252,7 @@ export function FAQSection({ items = faqs, subtitle = "Clear answers for job see
 }
 
 function ContactCard() {
-  return <div className="relative mx-auto w-full max-w-[430px] rounded-[2rem] border border-white/70 bg-white/75 p-6 shadow-[0_30px_90px_rgba(91,75,255,0.14)] backdrop-blur-xl"><div className="grid gap-4"><div className="rounded-2xl bg-brand-tonal p-5"><p className="text-sm font-extrabold text-brand">Support</p><p className="mt-2 break-words text-xl font-black tracking-[-0.04em] sm:text-2xl sm:tracking-[-0.05em]">support@privatesectorjob.com</p></div><div className="rounded-2xl border border-line bg-white p-5"><p className="text-sm font-extrabold text-ink-3">Response window</p><p className="mt-2 text-lg font-extrabold">Business days</p></div></div></div>;
+  return <div className="relative mx-auto w-full max-w-[430px] rounded-[2rem] border border-white/70 bg-white/75 p-6 shadow-[0_30px_90px_rgba(91,75,255,0.14)] backdrop-blur-xl"><div className="grid gap-4"><div className="rounded-2xl bg-brand-tonal p-5"><p className="text-sm font-extrabold text-brand">Support</p><p className="mt-2 break-words text-xl font-black tracking-[-0.04em] sm:text-2xl sm:tracking-[-0.05em]">support@privatecareerjob.com</p></div><div className="rounded-2xl border border-line bg-white p-5"><p className="text-sm font-extrabold text-ink-3">Response window</p><p className="mt-2 text-lg font-extrabold">Business days</p></div></div></div>;
 }
 
 export function CTASection() {

@@ -25,7 +25,7 @@ function toPost(slug: string, d: FirebaseFirestore.DocumentData): BlogPost {
     content: d.content ?? "",
     coverEmoji: d.coverEmoji ?? "📝",
     featuredImage: d.featuredImage ?? "",
-    author: d.author ?? "privatesectorjob",
+    author: d.author ?? "privatecareerjob",
     createdAt: d.createdAt?.toMillis?.() ?? 0,
     updatedAt: d.updatedAt?.toMillis?.() ?? 0,
   };

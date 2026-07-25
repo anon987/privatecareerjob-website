@@ -5,19 +5,19 @@ import { LegalDoc } from "@/components/marketing/LegalDoc";
 export const metadata: Metadata = {
   title: "Terms of Service",
   description:
-    "The terms that govern your use of the privatesectorjob apps and website for job seekers and recruiters.",
+    "The terms that govern your use of the privatecareerjob apps and website for job seekers and recruiters.",
   alternates: { canonical: "/terms" },
 };
 
 const UPDATED = "24 July 2026";
-const CONTACT = "support@privatesectorjob.com";
+const CONTACT = "support@privatecareerjob.com";
 
 export default function TermsPage() {
   return (
     <LegalDoc
       title="Terms of Service"
       updated={UPDATED}
-      intro="These terms are an agreement between you and privatesectorjob governing your use of our apps and website. By creating an account or using the service, you agree to these terms."
+      intro="These terms are an agreement between you and privatecareerjob governing your use of our apps and website. By creating an account or using the service, you agree to these terms."
     >
       <h2>1. Eligibility and accounts</h2>
       <p>
@@ -27,7 +27,7 @@ export default function TermsPage() {
 
       <h2>2. The service</h2>
       <p>
-        privatesectorjob helps job seekers discover and apply to jobs and track applications, and helps recruiters post jobs
+        privatecareerjob helps job seekers discover and apply to jobs and track applications, and helps recruiters post jobs
         and manage candidates. We provide the platform “as is” and do not guarantee employment, hiring, interviews, or any
         particular outcome.
       </p>
@@ -73,7 +73,7 @@ export default function TermsPage() {
       <h2>8. Disclaimers and limitation of liability</h2>
       <p>
         The service is provided “as is” without warranties of any kind. To the maximum extent permitted by law,
-        privatesectorjob is not liable for indirect, incidental, or consequential damages, or for any hiring decisions,
+        privatecareerjob is not liable for indirect, incidental, or consequential damages, or for any hiring decisions,
         job outcomes, or interactions between seekers and recruiters.
       </p>
 

@@ -5,23 +5,23 @@ import { LegalDoc } from "@/components/marketing/LegalDoc";
 export const metadata: Metadata = {
   title: "Privacy Policy",
   description:
-    "How privatesectorjob collects, uses, shares, and protects your personal data across the job-seeker and recruiter apps and website.",
+    "How privatecareerjob collects, uses, shares, and protects your personal data across the job-seeker and recruiter apps and website.",
   alternates: { canonical: "/privacy" },
 };
 
 const UPDATED = "24 July 2026";
-const CONTACT = "support@privatesectorjob.com";
+const CONTACT = "support@privatecareerjob.com";
 
 export default function PrivacyPage() {
   return (
     <LegalDoc
       title="Privacy Policy"
       updated={UPDATED}
-      intro="This policy explains what personal information privatesectorjob (“we”, “us”) collects, why we collect it, who we share it with, and the choices and rights you have. It applies to our Android app and our website."
+      intro="This policy explains what personal information privatecareerjob (“we”, “us”) collects, why we collect it, who we share it with, and the choices and rights you have. It applies to our Android app and our website."
     >
       <h2>Who we are</h2>
       <p>
-        privatesectorjob is a two-sided job platform for India that connects private-sector job seekers with recruiters and
+        privatecareerjob is a two-sided job platform for India that connects private-sector job seekers with recruiters and
         employers. For any privacy question, contact us at <a href={`mailto:${CONTACT}`}>{CONTACT}</a>.
       </p>
 

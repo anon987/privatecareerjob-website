@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Shell } from "@/components/dash/Shell";
 
 export const metadata: Metadata = {
-  title: { default: "Dashboard — privatesectorjob", template: "%s — privatesectorjob" },
+  title: { default: "Dashboard — privatecareerjob", template: "%s — privatecareerjob" },
   robots: { index: false, follow: false },
 };
 

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { RecShell } from "@/components/recruiter/Shell";
 
 export const metadata: Metadata = {
-  title: { default: "Recruiter — privatesectorjob", template: "%s — privatesectorjob recruiter" },
+  title: { default: "Recruiter — privatecareerjob", template: "%s — privatecareerjob recruiter" },
   robots: { index: false, follow: false },
 };
 

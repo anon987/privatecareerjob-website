@@ -5,7 +5,7 @@ import { bumpViews, fetchSite, yearsOfExperience, SITE_ORIGIN, type PublicSite }
 import { Portfolio } from "@/components/portfolio/Portfolio";
 
 /**
- * Public portfolio pages — privatesectorjob.com/@handle.
+ * Public portfolio pages — privatecareerjob.com/@handle.
  * Server-rendered from Firestore's public REST endpoint (revalidated every 60s),
  * so shared links get real titles/descriptions/OG cards. Pages are noindex unless
  * the owner opted into search visibility (`discoverable`).
@@ -26,14 +26,14 @@ function seoTitle(site: PublicSite): string {
 function seoDescription(site: PublicSite): string {
   if (site.summary) return site.summary.length > 158 ? site.summary.slice(0, 155).trimEnd() + "…" : site.summary;
   const bits = [site.headline, site.location, site.skills?.slice(0, 4).join(", ")].filter(Boolean);
-  return bits.length ? `${site.name} — ${bits.join(" · ")}. Portfolio on privatesectorjob.` : `${site.name}'s portfolio on privatesectorjob.`;
+  return bits.length ? `${site.name} — ${bits.join(" · ")}. Portfolio on privatecareerjob.` : `${site.name}'s portfolio on privatecareerjob.`;
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ handle: string }> }): Promise<Metadata> {
   const handle = parseHandle((await params).handle);
-  if (!handle) return { title: "Page not found — privatesectorjob" };
+  if (!handle) return { title: "Page not found — privatecareerjob" };
   const site = await fetchSite(handle);
-  if (!site) return { title: "Page not found — privatesectorjob", robots: { index: false, follow: false } };
+  if (!site) return { title: "Page not found — privatecareerjob", robots: { index: false, follow: false } };
 
   const url = `${SITE_ORIGIN}/@${handle}`;
   const title = seoTitle(site);
@@ -48,7 +48,7 @@ export async function generateMetadata({ params }: { params: Promise<{ handle: s
     openGraph: {
       type: "profile",
       url,
-      siteName: "privatesectorjob",
+      siteName: "privatecareerjob",
       title,
       description,
     },

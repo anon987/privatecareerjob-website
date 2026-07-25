@@ -194,7 +194,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
         <div className="rise w-full max-w-[440px] bg-white border border-line rounded-3xl p-8 shadow-[0_18px_60px_rgba(17,24,39,0.08)]">
           <Link href="/" className="flex items-center gap-2.5 font-extrabold text-lg text-ink">
             <span className="grid place-items-center w-8 h-8 rounded-[9px] bg-brand text-white text-[17px]">P</span>
-            privatesectorjob
+            privatecareerjob
           </Link>
           <h1 className="mt-5 text-[26px] font-extrabold tracking-[-0.5px]">Find your next job</h1>
           <p className="mt-1.5 text-ink-2 text-[14.5px]">
@@ -240,7 +240,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
             <div className="h-14 flex items-center justify-between">
               <Link href="/dashboard" className="flex items-center gap-2.5 font-extrabold text-ink">
                 <span className="grid place-items-center w-8 h-8 rounded-[9px] bg-brand text-white text-[17px]">P</span>
-                <span className="hidden sm:inline">privatesectorjob</span>
+                <span className="hidden sm:inline">privatecareerjob</span>
               </Link>
               <div className="hidden md:block">
                 <AccountMenu user={user} profile={profile} />

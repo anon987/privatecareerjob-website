@@ -7,7 +7,7 @@ import { getAuth } from "firebase-admin/auth";
  * this works before any GCP service-account setup.
  */
 
-const PROJECT_ID = "privatesectorjob-807b8";
+const PROJECT_ID = "private-career-job-e46ec";
 
 function adminAuth() {
   const app = getApps()[0] ?? initializeApp({ projectId: PROJECT_ID });

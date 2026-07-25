@@ -257,7 +257,7 @@ export function Gallery({ site, t }: { site: PublicSite; t: ResolvedTheme }) {
 }
 
 export function Contact({ site, t }: { site: PublicSite; t: ResolvedTheme }) {
-  const url = `https://privatesectorjob.vercel.app/@${site.handle}`;
+  const url = `https://privatecareerjob.com/@${site.handle}`;
   const shareText = encodeURIComponent(`${site.name} — ${site.headline}. ${url}`);
   const btn = `inline-flex items-center min-h-11 px-5 rounded-full text-[14px] font-bold border transition-colors ${t.rule} hover:bg-[var(--pa-soft)]`;
   return (
@@ -265,11 +265,11 @@ export function Contact({ site, t }: { site: PublicSite; t: ResolvedTheme }) {
       <div className={`rounded-2xl p-6 text-center ${t.card}`}>
         <p className="text-[15.5px] font-bold">Interested in working with {site.name?.split(" ")[0] || "me"}?</p>
         <p className={`text-[13.5px] mt-1 ${t.soft}`}>
-          {site.email || site.phone ? "Reach out directly, or share this profile with your team." : "Share this profile with your team, or connect on privatesectorjob."}
+          {site.email || site.phone ? "Reach out directly, or share this profile with your team." : "Share this profile with your team, or connect on privatecareerjob."}
         </p>
         <div className="flex flex-wrap items-center justify-center gap-2.5 mt-5">
           {site.email && (
-            <a href={`mailto:${site.email}?subject=Opportunity via privatesectorjob`} className="inline-flex items-center min-h-11 px-6 rounded-full text-[14px] font-bold text-white" style={{ background: t.accent }}>
+            <a href={`mailto:${site.email}?subject=Opportunity via privatecareerjob`} className="inline-flex items-center min-h-11 px-6 rounded-full text-[14px] font-bold text-white" style={{ background: t.accent }}>
               ✉️ Email
             </a>
           )}
@@ -290,8 +290,8 @@ export function Contact({ site, t }: { site: PublicSite; t: ResolvedTheme }) {
 export function Footer({ site, t }: { site: PublicSite; t: ResolvedTheme }) {
   return (
     <footer className={`mt-14 pt-8 pb-6 text-center text-[13px] border-t ${t.rule} ${t.soft}`}>
-      <p className="font-semibold">privatesectorjob.com/@{site.handle}</p>
-      <p className="mt-1 opacity-80">Created with privatesectorjob — India&apos;s premium job platform.</p>
+      <p className="font-semibold">privatecareerjob.com/@{site.handle}</p>
+      <p className="mt-1 opacity-80">Created with privatecareerjob — India&apos;s premium job platform.</p>
       <a href="/signup" className="inline-block mt-3 font-bold" style={{ color: t.accent }}>
         Create your own portfolio — free
       </a>
@@ -305,7 +305,7 @@ export function StickyBar({ site, t }: { site: PublicSite; t: ResolvedTheme }) {
   return (
     <div className={`fixed bottom-0 inset-x-0 sm:hidden border-t px-4 py-3 flex gap-2.5 ${t.rule} ${t.dark ? "bg-[#14161D]/95" : "bg-white/95"} backdrop-blur`}>
       {site.email ? (
-        <a href={`mailto:${site.email}?subject=Opportunity via privatesectorjob`} className="flex-1 inline-flex items-center justify-center min-h-12 rounded-full text-[15px] font-bold text-white" style={{ background: t.accent }}>
+        <a href={`mailto:${site.email}?subject=Opportunity via privatecareerjob`} className="flex-1 inline-flex items-center justify-center min-h-12 rounded-full text-[15px] font-bold text-white" style={{ background: t.accent }}>
           Hire me
         </a>
       ) : (

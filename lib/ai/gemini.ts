@@ -8,7 +8,7 @@ import { GoogleGenAI, type Schema } from "@google/genai";
  * routes surface that as a friendly 503.
  *
  * The Vertex project is independent of the Firebase project: sign-in
- * verification stays on `privatesectorjob` (lib/ai/serverAuth.ts) while AI
+ * verification stays on `privatecareerjob` (lib/ai/serverAuth.ts) while AI
  * calls run against whichever project GOOGLE_CLOUD_PROJECT names.
  */
 

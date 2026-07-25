@@ -19,11 +19,11 @@ const navItems = [
 
 function Logo() {
   return (
-    <Link href="/" className="group flex items-center gap-2.5 font-extrabold text-lg text-ink" aria-label="PrivateSectorJob home">
+    <Link href="/" className="group flex items-center gap-2.5 font-extrabold text-lg text-ink" aria-label="PrivateCareerJob home">
       <span className="grid h-8 w-8 place-items-center rounded-[9px] bg-brand text-[17px] text-white shadow-[0_12px_30px_rgba(91,75,255,0.28)] transition-transform group-hover:-translate-y-0.5">
         P
       </span>
-      <span className="tracking-[-0.02em]">privatesectorjob</span>
+      <span className="tracking-[-0.02em]">privatecareerjob</span>
     </Link>
   );
 }
@@ -161,7 +161,7 @@ export function MarketingShell({ children }: { children: React.ReactNode }) {
             <div className="mt-5 flex gap-3">
               <Link href="/contact" aria-label="Contact" className="grid h-10 w-10 place-items-center rounded-xl border border-line text-ink-2 hover:text-brand"><MessageCircle className="h-4 w-4" /></Link>
               <Link href="/about" aria-label="About" className="grid h-10 w-10 place-items-center rounded-xl border border-line text-ink-2 hover:text-brand"><UsersRound className="h-4 w-4" /></Link>
-              <Link href="mailto:support@privatesectorjob.com" aria-label="Email support" className="grid h-10 w-10 place-items-center rounded-xl border border-line text-ink-2 hover:text-brand"><Mail className="h-4 w-4" /></Link>
+              <Link href="mailto:support@privatecareerjob.com" aria-label="Email support" className="grid h-10 w-10 place-items-center rounded-xl border border-line text-ink-2 hover:text-brand"><Mail className="h-4 w-4" /></Link>
             </div>
           </div>
           {[
@@ -178,7 +178,7 @@ export function MarketingShell({ children }: { children: React.ReactNode }) {
             </div>
           ))}
         </div>
-        <div className="mx-auto mt-10 max-w-[1180px] border-t border-line pt-6 text-sm text-ink-3">© 2026 privatesectorjob. Made in India.</div>
+        <div className="mx-auto mt-10 max-w-[1180px] border-t border-line pt-6 text-sm text-ink-3">© 2026 privatecareerjob. Made in India.</div>
       </footer>
     </div>
   );
