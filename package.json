@@ -11,6 +11,7 @@
   "dependencies": {
     "@google/genai": "^2.11.0",
     "@sparticuz/chromium": "^147.0.0",
+    "@vercel/analytics": "^2.0.1",
     "firebase": "^12.15.0",
     "firebase-admin": "^13.10.0",
     "framer-motion": "^12.42.2",
